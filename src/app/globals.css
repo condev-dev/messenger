@@ -1,0 +1,309 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* =========================================================
+   Design tokens — Indigo Pro
+   Light + Dark. Colors in oklch for perceptual consistency.
+   ========================================================= */
+:root {
+  --radius: 0.75rem;
+
+  /* shadcn base — light */
+  --background: oklch(0.985 0.004 250);
+  --foreground: oklch(0.18 0.03 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.03 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.03 265);
+  --primary: oklch(0.63 0.17 258);          /* #3B6FE0 */
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.01 260);
+  --secondary-foreground: oklch(0.25 0.04 265);
+  --muted: oklch(0.96 0.01 260);
+  --muted-foreground: oklch(0.52 0.02 260);
+  --accent: oklch(0.95 0.03 258);
+  --accent-foreground: oklch(0.25 0.04 265);
+  --destructive: oklch(0.6 0.22 27);
+  --border: oklch(0.92 0.01 260);
+  --input: oklch(0.92 0.01 260);
+  --ring: oklch(0.68 0.14 258);
+  --chart-1: oklch(0.63 0.17 258);
+  --chart-2: oklch(0.7 0.16 200);
+  --chart-3: oklch(0.72 0.17 150);
+  --chart-4: oklch(0.75 0.17 60);
+  --chart-5: oklch(0.65 0.22 20);
+  --sidebar: oklch(0.985 0.004 250);
+  --sidebar-foreground: oklch(0.18 0.03 265);
+  --sidebar-primary: oklch(0.63 0.17 258);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.95 0.03 258);
+  --sidebar-accent-foreground: oklch(0.25 0.04 265);
+  --sidebar-border: oklch(0.92 0.01 260);
+  --sidebar-ring: oklch(0.68 0.14 258);
+
+  /* App-specific — messenger */
+  --brand: oklch(0.7 0.15 258);                 /* #5B8DEF */
+  --brand-strong: oklch(0.63 0.17 258);         /* #3B6FE0 */
+  --brand-soft: oklch(0.95 0.03 258);
+
+  --app-bg: oklch(0.97 0.006 258);              /* صفحه */
+  --chat-bg: oklch(0.955 0.008 258);            /* پنجره‌ی چت */
+  --panel: oklch(1 0 0);                        /* نوار کناری */
+  --panel-hover: oklch(0.955 0.01 258);
+  --panel-active: oklch(0.93 0.03 258);
+
+  --bubble-out: oklch(0.63 0.17 258);           /* حباب خودم */
+  --bubble-out-fg: oklch(0.99 0 0);
+  --bubble-out-meta: oklch(0.88 0.06 258);
+  --bubble-in: oklch(1 0 0);                    /* حباب طرف مقابل */
+  --bubble-in-fg: oklch(0.18 0.03 265);
+  --bubble-in-meta: oklch(0.55 0.02 260);
+  --bubble-reply: oklch(0.97 0.02 258);
+
+  --tick: oklch(0.75 0.15 200);                 /* تیک خوانده‌شده */
+  --unread-badge: oklch(0.63 0.17 258);
+
+  --radius-bubble: 18px;
+  --radius-bubble-tail: 6px;
+
+  /* Shadows (لایه‌ای شبیه تلگرام) */
+  --shadow-sm: 0 1px 2px oklch(0.2 0.02 260 / 0.06);
+  --shadow-md: 0 4px 16px oklch(0.2 0.02 260 / 0.08);
+  --shadow-lg: 0 12px 40px oklch(0.2 0.02 260 / 0.12);
+  --shadow-bubble: 0 1px 1px oklch(0.2 0.02 260 / 0.06);
+
+  /* Motion tokens (مرکز انیمیشن) */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 280ms;
+  --dur-slower: 420ms;
+}
+
+.dark {
+  --background: oklch(0.18 0.025 265);
+  --foreground: oklch(0.96 0.005 260);
+  --card: oklch(0.22 0.03 265);
+  --card-foreground: oklch(0.96 0.005 260);
+  --popover: oklch(0.24 0.03 265);
+  --popover-foreground: oklch(0.96 0.005 260);
+  --primary: oklch(0.72 0.15 258);
+  --primary-foreground: oklch(0.15 0.03 265);
+  --secondary: oklch(0.28 0.03 265);
+  --secondary-foreground: oklch(0.96 0.005 260);
+  --muted: oklch(0.27 0.025 265);
+  --muted-foreground: oklch(0.7 0.02 260);
+  --accent: oklch(0.3 0.05 258);
+  --accent-foreground: oklch(0.96 0.005 260);
+  --destructive: oklch(0.65 0.22 27);
+  --border: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.1);
+  --ring: oklch(0.65 0.14 258);
+  --sidebar: oklch(0.2 0.025 265);
+  --sidebar-foreground: oklch(0.96 0.005 260);
+  --sidebar-primary: oklch(0.72 0.15 258);
+  --sidebar-primary-foreground: oklch(0.15 0.03 265);
+  --sidebar-accent: oklch(0.3 0.05 258);
+  --sidebar-accent-foreground: oklch(0.96 0.005 260);
+  --sidebar-border: oklch(1 0 0 / 0.08);
+  --sidebar-ring: oklch(0.65 0.14 258);
+
+  --brand: oklch(0.72 0.15 258);
+  --brand-strong: oklch(0.65 0.17 258);
+  --brand-soft: oklch(0.3 0.06 258);
+
+  --app-bg: oklch(0.16 0.02 265);
+  --chat-bg: oklch(0.19 0.025 265);
+  --panel: oklch(0.21 0.025 265);
+  --panel-hover: oklch(0.25 0.03 265);
+  --panel-active: oklch(0.3 0.05 258);
+
+  --bubble-out: oklch(0.6 0.16 258);
+  --bubble-out-fg: oklch(0.99 0 0);
+  --bubble-out-meta: oklch(0.88 0.06 258);
+  --bubble-in: oklch(0.26 0.025 265);
+  --bubble-in-fg: oklch(0.96 0.005 260);
+  --bubble-in-meta: oklch(0.7 0.02 260);
+  --bubble-reply: oklch(0.3 0.04 258);
+
+  --tick: oklch(0.78 0.14 200);
+  --unread-badge: oklch(0.72 0.15 258);
+
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-md: 0 4px 16px oklch(0 0 0 / 0.4);
+  --shadow-lg: 0 12px 40px oklch(0 0 0 / 0.5);
+  --shadow-bubble: 0 1px 1px oklch(0 0 0 / 0.25);
+}
+
+/* =========================================================
+   Theme mapping — expose tokens as Tailwind utilities
+   ========================================================= */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-app-bg: var(--app-bg);
+  --color-chat-bg: var(--chat-bg);
+  --color-panel: var(--panel);
+  --color-panel-hover: var(--panel-hover);
+  --color-panel-active: var(--panel-active);
+  --color-bubble-out: var(--bubble-out);
+  --color-bubble-out-fg: var(--bubble-out-fg);
+  --color-bubble-in: var(--bubble-in);
+  --color-bubble-in-fg: var(--bubble-in-fg);
+  --color-bubble-reply: var(--bubble-reply);
+  --color-tick: var(--tick);
+  --color-unread-badge: var(--unread-badge);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-bubble: var(--radius-bubble);
+
+  --shadow-xs: var(--shadow-sm);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-bubble: var(--shadow-bubble);
+
+  --font-sans: "Vazirmatn Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* =========================================================
+   Base layer
+   ========================================================= */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    @apply bg-app-bg text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "ss02", "cv01";
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Scrollbar ظریف‌تر */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.6 0.02 260 / 0.25);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.5 0.03 260 / 0.4);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
+
+  /* انتخاب متن */
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--foreground);
+  }
+
+  /* عدد تابولار برای تایم‌استمپ‌ها */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* =========================================================
+   Chat background pattern (ظریف، شبیه تلگرام ولی خفیف‌تر)
+   ========================================================= */
+.chat-pattern {
+  background-color: var(--chat-bg);
+  background-image:
+    radial-gradient(oklch(0.6 0.05 258 / 0.06) 1px, transparent 1px),
+    radial-gradient(oklch(0.6 0.05 258 / 0.04) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+.dark .chat-pattern {
+  background-image:
+    radial-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px),
+    radial-gradient(oklch(1 0 0 / 0.025) 1px, transparent 1px);
+}
+
+/* =========================================================
+   Motion
+   ========================================================= */
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50%      { opacity: 1;   transform: translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
