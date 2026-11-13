@@ -38,5 +38,11 @@
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@emoji-mart/react": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
   }
 }
