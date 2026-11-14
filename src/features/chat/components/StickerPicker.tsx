@@ -46,11 +46,12 @@ export function StickerPicker({ open, anchorRect, stickers, onPick, onUpload, on
 
   if (typeof document === "undefined") return null;
 
-  const W = 320;
-  const H = 380;
-  let left = 16;
-  let top = 100;
-  if (anchorRect) {
+  const W = Math.min(320, window.innerWidth - 16);
+  const H = Math.min(380, window.innerHeight - 100);
+  let left = 8;
+  let top = window.innerHeight - H - 80; // above input area
+
+  if (window.innerWidth >= 768 && anchorRect) {
     left = Math.max(8, Math.min(window.innerWidth - W - 8, anchorRect.right - W));
     top = Math.max(8, Math.min(window.innerHeight - H - 8, anchorRect.top - H - 8));
   }

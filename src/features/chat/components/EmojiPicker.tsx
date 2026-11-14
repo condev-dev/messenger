@@ -99,13 +99,13 @@ export function EmojiPicker({ open, anchorRect, onPick, onClose }: Props) {
   if (typeof document === "undefined") return null;
 
   // محاسبه موقعیت
-  const PICKER_W = 352;
-  const PICKER_H = 420;
+  const PICKER_W = Math.min(352, window.innerWidth - 16);
+  const PICKER_H = Math.min(420, window.innerHeight - 100);
   const GAP = 8;
 
-  let left = 16;
-  let top = 100;
-  if (anchorRect) {
+  let left = 8;
+  let top = window.innerHeight - PICKER_H - 80;
+  if (window.innerWidth >= 768 && anchorRect) {
     left = Math.max(
       8,
       Math.min(window.innerWidth - PICKER_W - 8, anchorRect.right - PICKER_W)

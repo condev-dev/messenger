@@ -79,13 +79,13 @@ export function GifPicker({ open, anchorRect, onPick, onClose }: Props) {
 
   if (typeof document === "undefined") return null;
 
-  const W = 360;
-  const H = 440;
+  const W = Math.min(360, window.innerWidth - 16);
+  const H = Math.min(440, window.innerHeight - 100);
   const GAP = 8;
 
-  let left = 16;
-  let top = 100;
-  if (anchorRect) {
+  let left = 8;
+  let top = window.innerHeight - H - 80;
+  if (window.innerWidth >= 768 && anchorRect) {
     left = Math.max(
       8,
       Math.min(window.innerWidth - W - 8, anchorRect.right - W)
@@ -122,7 +122,6 @@ export function GifPicker({ open, anchorRect, onPick, onClose }: Props) {
             <div className="relative flex-1">
               <Search className="absolute start-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input
-                autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="جستجوی GIF…"
