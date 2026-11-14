@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { ChatItem, Profile, MessageContent } from "../types";
+import { subscribeToTabEvents } from "../lib/tab-sync";
 
 type SummaryRow = {
   id: string;
@@ -128,7 +129,7 @@ export function useChats(userId: string) {
 
     // گوش دادن به تغییرات messages و chat_members تا لیست چت‌ها بروز بماند
     const ch = supabase
-      .channel("chats-refresh")
+      .channel(`chats-refresh:${userId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
@@ -146,8 +147,13 @@ export function useChats(userId: string) {
       )
       .subscribe();
 
+    const unsubscribeTabEvents = subscribeToTabEvents(() => {
+      scheduleLoad();
+    });
+
     return () => {
       cancelled = true;
+      unsubscribeTabEvents();
       if (timerRef.current) clearTimeout(timerRef.current);
       supabase.removeChannel(ch);
     };

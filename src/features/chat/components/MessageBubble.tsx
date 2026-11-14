@@ -3,7 +3,7 @@
 import * as React from "react";
 import { createElement, useRef } from "react";
 import { motion } from "framer-motion";
-import { Check, CheckCheck, Clock, AlertCircle, Reply as ReplyIcon } from "lucide-react";
+import { Check, CheckCheck, Clock, AlertCircle, Reply as ReplyIcon, Pin, Forward as ForwardIcon } from "lucide-react";
 import type { Message, ReplyRef } from "../types";
 import { getRenderer } from "../messages/registry";
 import { bubbleIn } from "@/lib/motion";
@@ -26,6 +26,7 @@ export function MessageBubble({
   group,
   replyRef,
   highlighted,
+  forwardedFromName,
   onContextMenu,
   onReplyClick,
   bubbleRef,
@@ -35,6 +36,8 @@ export function MessageBubble({
   group: Group;
   replyRef?: ReplyRef | null;
   highlighted?: boolean;
+  /** اگر پیام forward است و فرستنده‌ی اصلی مشخص است */
+  forwardedFromName?: string | null;
   onContextMenu?: (info: BubbleContextInfo) => void;
   onReplyClick?: (id: string) => void;
   bubbleRef?: (el: HTMLDivElement | null) => void;
@@ -160,6 +163,21 @@ export function MessageBubble({
           </span>
         )}
 
+        {/* برچسب «هدایت‌شده از …» */}
+        {forwardedFromName && !isDeleted && !isJumbo && (
+          <div
+            className={cn(
+              "flex items-center gap-1 mb-1 text-[11px] font-medium",
+              mine ? "text-white/80" : "text-primary"
+            )}
+          >
+            <ForwardIcon className="size-3 shrink-0" />
+            <span className="truncate">
+              هدایت‌شده از <span className="font-semibold">{forwardedFromName}</span>
+            </span>
+          </div>
+        )}
+
         {/* Reply preview */}
         {replyRef && !isDeleted && (
           <button
@@ -229,6 +247,9 @@ export function MessageBubble({
               : "text-bubble-in-fg/60"
           )}
         >
+          {message.pinned_at && !isDeleted && (
+            <Pin className="size-3 shrink-0" aria-label="پین‌شده" />
+          )}
           {message.edited_at && !isDeleted && <span className="italic">ویرایش‌شده</span>}
           <span>{formatTime(message.created_at)}</span>
           {mine && !isDeleted && <StatusIcon status={message.status} isJumbo={isJumbo} />}

@@ -124,6 +124,7 @@ function Inner({ me }: { me: Profile }) {
               userId={me.id}
               title={title}
               other={activeChat?.other}
+              chats={chats}
             />
           ) : null
         }

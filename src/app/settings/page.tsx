@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Camera, Save, Loader2, Lock, Mail, User as UserIcon } from "lucide-react";
+import { ArrowRight, Camera, Save, Loader2, Lock, Mail, User as UserIcon, Bell, BellOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/features/chat/hooks/useProfile";
+import { useNotificationPermission } from "@/features/chat/hooks/useNotificationPermission";
 import { Avatar } from "@/components/ui/avatar-smart";
 import { IconButton } from "@/components/ui/icon-button";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ export default function SettingsPage() {
 function Inner({ userId, initialEmail }: { userId: string; initialEmail: string }) {
   const r = useRouter();
   const { profile, loading, update, uploadAvatar } = useProfile(userId);
+  const notif = useNotificationPermission();
 
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
@@ -272,6 +274,57 @@ function Inner({ userId, initialEmail }: { userId: string; initialEmail: string 
             title="شناسه"
             subtitle={profile.id}
             mono
+          />
+        </motion.section>
+
+        {/* کارت اعلان‌ها */}
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...spring.snappy, delay: duration.fast * 2 }}
+          className="rounded-2xl bg-panel border border-border/70 p-5 md:p-6 shadow-sm space-y-4"
+        >
+          <h2 className="text-sm font-bold text-muted-foreground">اعلان‌ها</h2>
+
+          <Row
+            icon={
+              notif.state === "granted" ? (
+                <Bell className="size-4" />
+              ) : (
+                <BellOff className="size-4" />
+              )
+            }
+            title="اعلان‌های دسکتاپ"
+            subtitle={
+              notif.state === "unsupported"
+                ? "مرورگر شما از اعلان پشتیبانی نمی‌کند"
+                : notif.state === "granted"
+                ? "وقتی تب باز نیست، برای پیام‌های جدید اعلان می‌گیرید"
+                : notif.state === "denied"
+                ? "دسترسی رد شده. از تنظیمات مرورگر فعال کنید."
+                : "برای دریافت اعلان وقتی تب بسته است، اجازه دهید"
+            }
+            action={
+              notif.state === "default" ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const s = await notif.request();
+                    if (s === "granted") toast.success("اعلان‌ها فعال شدند");
+                    else if (s === "denied") toast.error("دسترسی رد شد");
+                  }}
+                >
+                  فعال‌سازی
+                </Button>
+              ) : notif.state === "granted" ? (
+                <span className="text-[11.5px] font-medium text-emerald-600 dark:text-emerald-400">
+                  فعال
+                </span>
+              ) : notif.state === "denied" ? (
+                <span className="text-[11.5px] font-medium text-destructive">غیرفعال</span>
+              ) : null
+            }
           />
         </motion.section>
       </div>

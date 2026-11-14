@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Message, MessageContent } from "../types";
+import { publishTabEvent, subscribeToTabEvents } from "../lib/tab-sync";
 
 const PAGE_SIZE = 50;
 
@@ -140,8 +141,20 @@ export function useMessages(chatId: string | null, userId: string) {
       )
       .subscribe();
 
+    const unsubscribeTabEvents = subscribeToTabEvents((event) => {
+      if (event.chatId !== chatId) return;
+      if (event.action === "insert") {
+        setMessages((prev) => (prev.some((m) => m.id === event.message.id) ? prev : [...prev, event.message]));
+      } else if (event.action === "update") {
+        setMessages((prev) => prev.map((m) => (m.id === event.message.id ? { ...m, ...event.message } : m)));
+      } else {
+        setMessages((prev) => prev.filter((m) => m.id !== event.messageId));
+      }
+    });
+
     return () => {
       cancelled = true;
+      unsubscribeTabEvents();
       supabase.removeChannel(channel);
     };
   }, [chatId, userId]);
@@ -193,17 +206,18 @@ export function useMessages(chatId: string | null, userId: string) {
         .select()
         .single();
 
+      if (error || !data) {
+        setMessages((p) => p.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m)));
+        return;
+      }
+      const saved = data as Message;
       setMessages((p) => {
-        if (error || !data) {
-          return p.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m));
-        }
-        const exists = p.some((m) => m.id === (data as Message).id);
+        const exists = p.some((m) => m.id === saved.id);
         return exists
           ? p.filter((m) => m.id !== tempId)
-          : p.map((m) =>
-              m.id === tempId ? { ...(data as Message), status: "sent" } : m
-            );
+          : p.map((m) => (m.id === tempId ? { ...saved, status: "sent" } : m));
       });
+      publishTabEvent({ type: "message", action: "insert", chatId, message: saved });
     },
     [chatId, userId]
   );
@@ -212,10 +226,11 @@ export function useMessages(chatId: string | null, userId: string) {
     async (messageId: string, newText: string) => {
       const t = newText.trim();
       if (!t) return;
+      const editedAt = new Date().toISOString();
       setMessages((p) =>
         p.map((m) =>
           m.id === messageId
-            ? { ...m, content: { ...m.content, text: t }, edited_at: new Date().toISOString() }
+            ? { ...m, content: { ...m.content, text: t }, edited_at: editedAt }
             : m
         )
       );
@@ -223,13 +238,20 @@ export function useMessages(chatId: string | null, userId: string) {
         .from("messages")
         .update({
           content: { text: t },
-          edited_at: new Date().toISOString(),
+          edited_at: editedAt,
         })
         .eq("id", messageId)
         .eq("sender_id", userId);
       if (error && chatId) {
         const { rows } = await fetchPage(chatId);
         setMessages(rows);
+      } else {
+        publishTabEvent({
+          type: "message",
+          action: "update",
+          chatId: chatId!,
+          message: { id: messageId, content: { text: t }, edited_at: editedAt },
+        });
       }
     },
     [chatId, userId]
@@ -237,21 +259,29 @@ export function useMessages(chatId: string | null, userId: string) {
 
   const remove = useCallback(
     async (messageId: string) => {
+      const deletedAt = new Date().toISOString();
       setMessages((p) =>
         p.map((m) =>
           m.id === messageId
-            ? { ...m, deleted_at: new Date().toISOString(), content: {} }
+            ? { ...m, deleted_at: deletedAt, content: {} }
             : m
         )
       );
       const { error } = await supabase
         .from("messages")
-        .update({ deleted_at: new Date().toISOString(), content: {} })
+        .update({ deleted_at: deletedAt, content: {} })
         .eq("id", messageId)
         .eq("sender_id", userId);
       if (error && chatId) {
         const { rows } = await fetchPage(chatId);
         setMessages(rows);
+      } else {
+        publishTabEvent({
+          type: "message",
+          action: "update",
+          chatId: chatId!,
+          message: { id: messageId, deleted_at: deletedAt, content: {} },
+        });
       }
     },
     [chatId, userId]
@@ -261,6 +291,96 @@ export function useMessages(chatId: string | null, userId: string) {
     if (!chatId) return;
     await supabase.rpc("mark_chat_read", { chat: chatId });
   }, [chatId]);
+
+  /**
+   * Pin/Unpin یک پیام (در همین چت یا هر چتی که کاربر عضوش است).
+   * خروجی: pinned_at جدید (null یعنی آن‌پین شد).
+   */
+  const togglePin = useCallback(async (messageId: string) => {
+    const { data, error } = await supabase.rpc("toggle_pin", { p_message: messageId });
+    if (error) throw error;
+    // UPDATE از Realtime می‌رسد و state را خودش بروز می‌کند؛ اینجا فقط برای UX فوری
+    // اگر چت فعلی است، optimistic set هم می‌کنیم:
+    const pinnedAt = (data as string | null) ?? null;
+    setMessages((p) =>
+      p.map((m) =>
+        m.id === messageId
+          ? { ...m, pinned_at: pinnedAt }
+          : m
+      )
+    );
+    if (chatId) {
+      publishTabEvent({
+        type: "message",
+        action: "update",
+        chatId,
+        message: { id: messageId, pinned_at: pinnedAt },
+      });
+    }
+    return pinnedAt;
+  }, [chatId]);
+
+  /**
+   * Forward یک پیام به چت مقصد. پیام مبدا با کپی content و تنظیم forwarded_from_*
+   * در چت مقصد درج می‌شود. اگر مقصد چت فعلی باشد، optimistic هم اضافه می‌شود.
+   */
+  const forwardTo = useCallback(
+    async (source: Message, destChatId: string) => {
+      const tempId = crypto.randomUUID();
+      const payload = {
+        chat_id: destChatId,
+        sender_id: userId,
+        type: source.type,
+        content: source.content,
+        reply_to_id: null,
+        forwarded_from_message_id: source.forwarded_from_message_id ?? source.id,
+        forwarded_from_user_id: source.forwarded_from_user_id ?? source.sender_id,
+      };
+
+      if (destChatId === chatId) {
+        setMessages((p) => [
+          ...p,
+          {
+            id: tempId,
+            chat_id: destChatId,
+            sender_id: userId,
+            type: source.type,
+            content: source.content,
+            reply_to_id: null,
+            created_at: new Date().toISOString(),
+            edited_at: null,
+            deleted_at: null,
+            forwarded_from_message_id: payload.forwarded_from_message_id,
+            forwarded_from_user_id: payload.forwarded_from_user_id,
+            status: "sending",
+          },
+        ]);
+      }
+
+      const { data, error } = await supabase
+        .from("messages")
+        .insert(payload)
+        .select()
+        .single();
+
+      if (destChatId === chatId) {
+        setMessages((p) => {
+          if (error || !data) {
+            return p.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m));
+          }
+          const saved = data as Message;
+          const exists = p.some((m) => m.id === saved.id);
+          return exists
+            ? p.filter((m) => m.id !== tempId)
+            : p.map((m) => (m.id === tempId ? { ...saved, status: "sent" } : m));
+        });
+      }
+
+      if (error) throw error;
+      publishTabEvent({ type: "message", action: "insert", chatId: destChatId, message: data as Message });
+    },
+    [chatId, userId]
+  );
 
   const getById = useCallback(
     (id: string | null) => (id ? messagesRef.current.find((m) => m.id === id) : undefined),
@@ -308,6 +428,8 @@ export function useMessages(chatId: string | null, userId: string) {
     edit,
     remove,
     markRead,
+    togglePin,
+    forwardTo,
     getById,
     firstUnreadId,
   };

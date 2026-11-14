@@ -12,6 +12,8 @@ import { EmojiPicker } from "./EmojiPicker";
 import { GifPicker } from "./GifPicker";
 import type { GifItem } from "../lib/klipy";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useAudioRecorder } from "../hooks/useAudioRecorder";
 
 type Props = {
   onSend: (text: string, replyToId: string | null) => void;
@@ -30,6 +32,8 @@ type Props = {
   onTyping?: () => void;
   /* --- GIF --- */
   onPickGif?: (gif: GifItem) => void;
+  /* --- Voice --- */
+  onSendVoice?: (blob: Blob, duration: number, waveform: number[]) => void;
 };
 
 export function ChatInput({
@@ -46,12 +50,14 @@ export function ChatInput({
   attachmentsBusy,
   onTyping,
   onPickGif,
+  onSendVoice,
 }: Props) {
   const [text, setText] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [emojiRect, setEmojiRect] = useState<DOMRect | null>(null);
   const [gifOpen, setGifOpen] = useState(false);
   const [gifRect, setGifRect] = useState<DOMRect | null>(null);
+  const recorder = useAudioRecorder();
   const ref = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
@@ -361,7 +367,24 @@ export function ChatInput({
                 exit={{ opacity: 0, scale: 0.6, rotate: -30 }}
                 transition={{ duration: duration.fast }}
               >
-                <IconButton aria-label="ضبط صدا (به‌زودی)" disabled>
+                <IconButton
+                  aria-label={recorder.isRecording ? "توقف ضبط" : "ضبط صدا"}
+                  onClick={async () => {
+                    if (recorder.isRecording) {
+                      const result = await recorder.stopRecording();
+                      if (result && onSendVoice) {
+                        onSendVoice(result.blob, result.duration, result.waveform);
+                      }
+                    } else {
+                      const ok = await recorder.startRecording();
+                      if (!ok) {
+                        toast.error("ضبط صدا شروع نشد — ممکن است مرورگر پشتیبانی نکند");
+                      }
+                    }
+                  }}
+                  disabled={disabled || !onSendVoice}
+                  className={recorder.isRecording ? "text-red-500 animate-pulse" : ""}
+                >
                   <Mic />
                 </IconButton>
               </motion.div>

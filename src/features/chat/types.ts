@@ -24,6 +24,12 @@ export type Message = {
   created_at: string;
   edited_at: string | null;
   deleted_at: string | null;
+  // forward
+  forwarded_from_message_id?: string | null;
+  forwarded_from_user_id?: string | null;
+  // pin
+  pinned_at?: string | null;
+  pinned_by?: string | null;
   status?: "sending" | "sent" | "delivered" | "read" | "failed"; // فقط سمت کلاینت
 };
 

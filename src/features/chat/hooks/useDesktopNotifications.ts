@@ -25,10 +25,8 @@ export function useDesktopNotifications(
     if (typeof window === "undefined") return;
     if (!("Notification" in window)) return;
 
-    // اگر permission هنوز default است، به‌طور بی‌صدا request کن
-    if (Notification.permission === "default") {
-      void Notification.requestPermission();
-    }
+    // permission فقط با user gesture صدا زده می‌شود (در Settings).
+    // اینجا فقط subscribe می‌کنیم و اگر granted نبود، در لحظه‌ی پیام رد می‌شویم.
 
     const channel = supabase
       .channel("desktop-notify")
@@ -56,17 +54,18 @@ export function useDesktopNotifications(
               ? "📎 فایل"
               : "پیام جدید";
 
-          const options: NotificationOptions = {
+          // renotify فیلد غیراستاندارد روی NotificationOptions است (در Chrome کار می‌کند
+          // ولی در typeهای رسمی DOM ـ lib نیست). با Record<string, unknown> پاس می‌دهیم.
+          const options = {
             body: body.slice(0, 140),
             icon: "/icons/icon-192.svg",
             badge: "/icons/icon-192.svg",
             tag: `chat:${m.chat_id}`,
-            // @ts-expect-error — پشتیبانی غیرعمومی
             renotify: true,
             dir: "rtl",
             lang: "fa",
             data: { chat_id: m.chat_id, url: "/chat" },
-          };
+          } as NotificationOptions;
 
           // ترجیح: SW notification تا بعد از بسته‌شدن تب هم قابل کلیک باشد
           try {

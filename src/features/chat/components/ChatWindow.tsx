@@ -22,25 +22,32 @@ import { NewMessagesDivider } from "./NewMessagesDivider";
 import { ChatSearch } from "./ChatSearch";
 import { MessageContextMenu, type MessageMenuAction } from "./MessageContextMenu";
 import { TypingDots } from "./TypingDots";
+import { ForwardDialog } from "./ForwardDialog";
+import { PinnedBar } from "./PinnedBar";
 import { Avatar } from "@/components/ui/avatar-smart";
 import { IconButton } from "@/components/ui/icon-button";
 import { isNewDay, formatDaySeparator, formatLastSeen } from "@/lib/date";
 import { groupPosition } from "../lib/grouping";
+import { supabase } from "@/lib/supabase";
+import { MEDIA_BUCKET } from "../lib/media";
 import { spring, duration, easing } from "@/lib/motion";
 import { mediaContent } from "../lib/media";
 import { cn } from "@/lib/utils";
-import type { Message, Profile, ReplyRef } from "../types";
+import type { Message, Profile, ReplyRef, ChatItem } from "../types";
 
 export function ChatWindow({
   chatId,
   userId,
   title,
   other,
+  chats,
 }: {
   chatId: string;
   userId: string;
   title: string;
   other?: Profile;
+  /** لیست چت‌ها برای دیالوگ هدایت */
+  chats: ChatItem[];
 }) {
   const {
     messages,
@@ -52,6 +59,8 @@ export function ChatWindow({
     edit,
     remove,
     markRead,
+    togglePin,
+    forwardTo,
     firstUnreadId,
   } = useMessages(chatId, userId);
   const uploader = useMediaUpload(chatId, userId);
@@ -78,6 +87,8 @@ export function ChatWindow({
     mine: boolean;
   }>({ open: false, anchor: null, message: null, mine: false });
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  // منبع هدایت → باز کردن ForwardDialog
+  const [forwardSource, setForwardSource] = useState<Message | null>(null);
 
   // drag & drop
   const [dragOver, setDragOver] = useState(false);
@@ -210,21 +221,46 @@ export function ChatWindow({
     [userId, other]
   );
 
-  // محاسبه لیست item ها با گروه‌بندی و reply ref
+  // محاسبه لیست item ها با گروه‌بندی و reply ref + نام فرستنده‌ی اصلی برای forwarded
   const items = useMemo(() => {
     const byId = new Map(messages.map((m) => [m.id, m]));
-    return messages.map((m, i) => ({
-      m,
-      group: groupPosition(messages[i - 1] ?? null, m, messages[i + 1] ?? null),
-      newDay: isNewDay(messages[i - 1]?.created_at ?? null, m.created_at),
-      replyRef: m.reply_to_id
-        ? (() => {
-            const target = byId.get(m.reply_to_id!);
-            return target ? makeReplyRef(target) : null;
-          })()
-        : null,
-    }));
-  }, [messages, makeReplyRef]);
+    const peerName = other?.display_name ?? other?.username ?? "کاربر";
+    return messages.map((m, i) => {
+      let forwardedFromName: string | null = null;
+      if (m.forwarded_from_user_id) {
+        if (m.forwarded_from_user_id === userId) {
+          forwardedFromName = "شما";
+        } else if (other && m.forwarded_from_user_id === other.id) {
+          forwardedFromName = peerName;
+        } else {
+          forwardedFromName = "کاربر دیگر";
+        }
+      }
+      return {
+        m,
+        group: groupPosition(messages[i - 1] ?? null, m, messages[i + 1] ?? null),
+        newDay: isNewDay(messages[i - 1]?.created_at ?? null, m.created_at),
+        replyRef: m.reply_to_id
+          ? (() => {
+              const target = byId.get(m.reply_to_id!);
+              return target ? makeReplyRef(target) : null;
+            })()
+          : null,
+        forwardedFromName,
+      };
+    });
+  }, [messages, makeReplyRef, other, userId]);
+
+  // پیام‌های پین‌شده (مرتب از جدید به قدیم بر اساس pinned_at)
+  const pinnedMessages = useMemo(() => {
+    return messages
+      .filter((m) => !!m.pinned_at && !m.deleted_at)
+      .sort((a, b) => {
+        const ta = a.pinned_at ? new Date(a.pinned_at).getTime() : 0;
+        const tb = b.pinned_at ? new Date(b.pinned_at).getTime() : 0;
+        return tb - ta;
+      });
+  }, [messages]);
 
   const scrollToMessage = useCallback((id: string) => {
     const el = bubbleRefs.current.get(id);
@@ -269,8 +305,43 @@ export function ChatWindow({
       void remove(m.id);
       toast.success("پیام حذف شد");
       if (editing?.id === m.id) setEditing(null);
+    } else if (action === "pin" || action === "unpin") {
+      void togglePin(m.id).then(
+        (next) => toast.success(next ? "پیام پین شد" : "پین برداشته شد"),
+        () => toast.error("انجام نشد")
+      );
+    } else if (action === "forward") {
+      setForwardSource(m);
     }
   };
+
+  const handleUnpinFromBar = useCallback(
+    (id: string) => {
+      void togglePin(id).then(
+        () => toast.success("پین برداشته شد"),
+        () => toast.error("انجام نشد")
+      );
+    },
+    [togglePin]
+  );
+
+  const handleForwardConfirm = useCallback(
+    async (destIds: string[], source: Message) => {
+      try {
+        for (const dest of destIds) {
+          await forwardTo(source, dest);
+        }
+        toast.success(
+          destIds.length > 1
+            ? `پیام به ${destIds.length.toLocaleString("fa-IR")} چت هدایت شد`
+            : "پیام هدایت شد"
+        );
+      } catch {
+        toast.error("هدایت ناموفق بود");
+      }
+    },
+    [forwardTo]
+  );
 
   // ارسال متن یا رسانه (یا هر دو)
   const handleSend = (text: string, replyToId: string | null) => {
@@ -313,6 +384,36 @@ export function ChatWindow({
     );
     setReplyTo(null);
     stopTyping();
+  };
+
+  const handleSendVoice = async (blob: Blob, duration: number, waveform: number[]) => {
+    if (!chatId || !userId) return;
+    try {
+      const ext = blob.type.includes("ogg") ? "ogg" : blob.type.includes("mp4") ? "m4a" : "webm";
+      const path = `${chatId}/${userId}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from(MEDIA_BUCKET)
+        .upload(path, blob, { contentType: blob.type || "audio/webm", upsert: false });
+      if (uploadError) {
+        toast.error("آپلود صدا ناموفق بود");
+        return;
+      }
+      const { data: urlData } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
+      await send(
+        "voice",
+        {
+          url: urlData.publicUrl,
+          duration: Math.round(duration),
+          waveform,
+          mime_type: blob.type || "audio/webm",
+        },
+        replyTo?.id ?? null
+      );
+      setReplyTo(null);
+      stopTyping();
+    } catch {
+      toast.error("ارسال صدا ناموفق بود");
+    }
   };
 
   const handleEditSave = (text: string) => {
@@ -398,6 +499,13 @@ export function ChatWindow({
         </div>
       </header>
 
+      {/* نوار پیام پین‌شده */}
+      <PinnedBar
+        pinned={pinnedMessages}
+        onJump={scrollToMessage}
+        onUnpin={handleUnpinFromBar}
+      />
+
       {/* نوار جستجو */}
       <ChatSearch
         open={searchOpen}
@@ -435,7 +543,7 @@ export function ChatWindow({
           )}
 
           <AnimatePresence initial={false}>
-            {items.map(({ m, group, newDay, replyRef }) => (
+            {items.map(({ m, group, newDay, replyRef, forwardedFromName }) => (
               <Fragment key={m.id}>
                 {newDay && <DaySeparator label={formatDaySeparator(m.created_at)} />}
                 {firstUnreadId === m.id && <NewMessagesDivider />}
@@ -445,6 +553,7 @@ export function ChatWindow({
                   group={group}
                   replyRef={replyRef}
                   highlighted={highlightId === m.id}
+                  forwardedFromName={forwardedFromName}
                   onContextMenu={openMenu}
                   onReplyClick={scrollToMessage}
                   bubbleRef={(el) => {
@@ -515,6 +624,7 @@ export function ChatWindow({
         attachmentsBusy={uploader.isUploading}
         onTyping={notifyTyping}
         onPickGif={handleSendGif}
+        onSendVoice={handleSendVoice}
       />
 
       <MessageContextMenu
@@ -524,7 +634,19 @@ export function ChatWindow({
         mine={menu.mine}
         canEdit={menu.message?.type === "text" && !menu.message?.deleted_at}
         canDelete={!menu.message?.deleted_at}
+        isPinned={!!menu.message?.pinned_at}
         onAction={handleAction}
+      />
+
+      <ForwardDialog
+        open={!!forwardSource}
+        onOpenChange={(v) => {
+          if (!v) setForwardSource(null);
+        }}
+        chats={chats}
+        currentChatId={chatId}
+        source={forwardSource}
+        onConfirm={handleForwardConfirm}
       />
     </div>
   );

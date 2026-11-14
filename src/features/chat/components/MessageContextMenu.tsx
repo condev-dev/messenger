@@ -3,11 +3,11 @@
 import * as React from "react";
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { motion, AnimatePresence } from "framer-motion";
-import { Reply, Pencil, Copy, Trash2, X } from "lucide-react";
+import { Reply, Pencil, Copy, Trash2, X, Pin, PinOff, Forward } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { menuPop } from "@/lib/motion";
 
-export type MessageMenuAction = "reply" | "edit" | "copy" | "delete";
+export type MessageMenuAction = "reply" | "edit" | "copy" | "delete" | "pin" | "unpin" | "forward";
 
 type Props = {
   open: boolean;
@@ -17,6 +17,7 @@ type Props = {
   mine: boolean;
   canEdit: boolean;
   canDelete: boolean;
+  isPinned: boolean;
   onAction: (action: MessageMenuAction) => void;
 };
 
@@ -59,6 +60,7 @@ export function MessageContextMenu({
   mine,
   canEdit,
   canDelete,
+  isPinned,
   onAction,
 }: Props) {
   const closeMenu = React.useCallback(() => onOpenChange(false), [onOpenChange]);
@@ -114,6 +116,18 @@ export function MessageContextMenu({
                 {mine && canEdit && (
                   <Item label="ویرایش" icon={<Pencil />} onSelect={() => onAction("edit")} closeMenu={closeMenu} />
                 )}
+                <Item
+                  label="هدایت"
+                  icon={<Forward />}
+                  onSelect={() => onAction("forward")}
+                  closeMenu={closeMenu}
+                />
+                <Item
+                  label={isPinned ? "برداشتن پین" : "پین کردن"}
+                  icon={isPinned ? <PinOff /> : <Pin />}
+                  onSelect={() => onAction(isPinned ? "unpin" : "pin")}
+                  closeMenu={closeMenu}
+                />
                 <Item label="کپی متن" icon={<Copy />} onSelect={() => onAction("copy")} closeMenu={closeMenu} />
                 {mine && canDelete && (
                   <Item
