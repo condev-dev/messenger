@@ -6,14 +6,20 @@ import { supabase } from "@/lib/supabase";
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+  const cleaned = base64String.trim().replace(/\s/g, "");
+  const padding = "=".repeat((4 - (cleaned.length % 4)) % 4);
+  const base64 = (cleaned + padding).replace(/-/g, "+").replace(/_/g, "/");
+  try {
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  } catch (err) {
+    console.error("Invalid VAPID key:", cleaned, cleaned.length);
+    throw err;
   }
-  return outputArray;
 }
 
 export type PushState = "unsupported" | "denied" | "default" | "subscribed" | "unsubscribed";
@@ -39,7 +45,11 @@ export function usePushSubscription(userId: string | null) {
   }, []);
 
   const subscribe = useCallback(async (): Promise<boolean> => {
-    if (!userId || !VAPID_PUBLIC_KEY) return false;
+    if (!userId || !VAPID_PUBLIC_KEY) {
+      console.error("VAPID key missing or userId missing", { userId, hasKey: !!VAPID_PUBLIC_KEY });
+      return false;
+    }
+    console.log("VAPID key length:", VAPID_PUBLIC_KEY.length, VAPID_PUBLIC_KEY);
     setLoading(true);
     try {
       const reg = await navigator.serviceWorker.ready;
