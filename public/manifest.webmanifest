@@ -11,6 +11,15 @@
   "lang": "fa",
   "dir": "rtl",
   "categories": ["social", "communication"],
+  "shortcuts": [
+    {
+      "name": "چت‌های جدید",
+      "short_name": "چت",
+      "description": "مشاهده لیست چت‌ها",
+      "url": "/chat",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-192.svg",

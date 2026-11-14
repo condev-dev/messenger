@@ -7,15 +7,18 @@
  * - هندل نوتیفیکیشن Push و کلیک (برای وقتی Web Push فعال شود)
  */
 
-const SW_VERSION = "masanger-v1";
+const SW_VERSION = "masanger-v2";
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 
 const STATIC_ASSETS = [
+  "/",
+  "/chat",
   "/manifest.webmanifest",
   "/icons/icon-192.svg",
   "/icons/icon-512.svg",
   "/icons/icon-maskable.svg",
+  "/offline.html",
 ];
 
 self.addEventListener("install", (event) => {
@@ -64,7 +67,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(req).then((r) => r || caches.match("/")))
+        .catch(() => caches.match(req).then((r) => r || caches.match("/offline.html")))
     );
     return;
   }

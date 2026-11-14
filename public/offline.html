@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>آفلاین — مسنجر</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #EEF2F8;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 2rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 1.5rem;
+      padding: 2.5rem 2rem;
+      max-width: 360px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+    }
+    .icon { font-size: 3rem; margin-bottom: 1rem; }
+    h1 { font-size: 1.25rem; margin-bottom: .5rem; }
+    p { font-size: .9rem; color: #64748b; line-height: 1.6; }
+    button {
+      margin-top: 1.5rem;
+      padding: .75rem 1.5rem;
+      border: none;
+      border-radius: .75rem;
+      background: #4F46E5;
+      color: #fff;
+      font-size: .9rem;
+      cursor: pointer;
+    }
+    button:hover { background: #4338CA; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📡</div>
+    <h1>اتصال اینترنت قطع است</h1>
+    <p>مسنجر برای ارسال و دریافت پیام به اینترنت نیاز دارد. لطفاً اتصال خود را بررسی کنید.</p>
+    <button onclick="location.reload()">تلاش مجدد</button>
+  </div>
+</body>
+</html>
