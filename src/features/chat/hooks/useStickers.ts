@@ -32,6 +32,7 @@ export function useStickers(userId: string | null) {
   }, [userId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync sticker list from DB on mount
     void fetchStickers();
   }, [fetchStickers]);
 
