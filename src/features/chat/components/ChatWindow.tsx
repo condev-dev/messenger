@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useMessages } from "../hooks/useMessages";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { useMediaUpload } from "../hooks/useMediaUpload";
+import { useStickers } from "../hooks/useStickers";
 import { useTyping } from "../hooks/useTyping";
 import { MessageBubble, type BubbleContextInfo } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
@@ -64,6 +65,7 @@ export function ChatWindow({
     firstUnreadId,
   } = useMessages(chatId, userId);
   const uploader = useMediaUpload(chatId, userId);
+  const { stickers, uploadSticker } = useStickers(userId);
   const { typingUsers, notifyTyping, stopTyping } = useTyping(chatId, userId);
 
   const otherIsTyping = other ? typingUsers.has(other.id) : typingUsers.size > 0;
@@ -411,8 +413,12 @@ export function ChatWindow({
     stopTyping();
   };
 
-  const handleSendSticker = (emoji: string) => {
-    void send("sticker", { emoji }, replyTo?.id ?? null);
+  const handleSendSticker = (value: string, isImage: boolean) => {
+    if (isImage) {
+      void send("sticker", { url: value }, replyTo?.id ?? null);
+    } else {
+      void send("sticker", { emoji: value }, replyTo?.id ?? null);
+    }
     setReplyTo(null);
     stopTyping();
   };
@@ -659,6 +665,8 @@ export function ChatWindow({
         onTyping={notifyTyping}
         onPickGif={handleSendGif}
         onPickSticker={handleSendSticker}
+        stickers={stickers}
+        onUploadSticker={(file) => void uploadSticker(file)}
         onSendVoice={handleSendVoice}
       />
 

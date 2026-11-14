@@ -34,7 +34,9 @@ type Props = {
   /* --- GIF --- */
   onPickGif?: (gif: GifItem) => void;
   /* --- Sticker --- */
-  onPickSticker?: (emoji: string) => void;
+  onPickSticker?: (value: string, isImage: boolean) => void;
+  stickers?: { id: string; url: string; emoji?: string | null }[];
+  onUploadSticker?: (file: File) => void;
   /* --- Voice --- */
   onSendVoice?: (blob: Blob, duration: number, waveform: number[]) => void;
 };
@@ -54,6 +56,8 @@ export function ChatInput({
   onTyping,
   onPickGif,
   onPickSticker,
+  stickers = [],
+  onUploadSticker,
   onSendVoice,
 }: Props) {
   const [text, setText] = useState("");
@@ -284,9 +288,13 @@ export function ChatInput({
         <StickerPicker
           open={stickerOpen}
           anchorRect={stickerRect}
-          onPick={(emoji) => {
+          stickers={stickers}
+          onPick={(value, isImage) => {
             setStickerOpen(false);
-            onPickSticker?.(emoji);
+            onPickSticker?.(value, isImage);
+          }}
+          onUpload={(file) => {
+            onUploadSticker?.(file);
           }}
           onClose={() => setStickerOpen(false)}
         />
