@@ -127,6 +127,17 @@ export function MessageBubble({
     clearPress();
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    // روی موبایل (touch)، تپ کوتاه context menu را باز می‌کند
+    if (isDeleted || !onContextMenu) return;
+    // فقط روی صفحات لمسی
+    if (window.matchMedia("(pointer: coarse)").matches) {
+      e.preventDefault();
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      onContextMenu({ message, x: rect.left + rect.width / 2, y: rect.top, mine });
+    }
+  };
+
   const handleContextMenu = (e: React.MouseEvent) => {
     if (isDeleted || !onContextMenu) return;
     e.preventDefault();
@@ -150,7 +161,7 @@ export function MessageBubble({
       <motion.div
         ref={(el) => bubbleRef?.(el)}
         onContextMenu={handleContextMenu}
-        onTouchStart={handleTouchStart}
+        onClick={handleClick}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchCancel={handleTouchEnd}
