@@ -7,6 +7,7 @@ import { ArrowRight, Camera, Save, Loader2, Lock, Mail, User as UserIcon, Bell, 
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/features/chat/hooks/useProfile";
 import { useNotificationPermission } from "@/features/chat/hooks/useNotificationPermission";
+import { usePushSubscription } from "@/features/chat/hooks/usePushSubscription";
 import { Avatar } from "@/components/ui/avatar-smart";
 import { IconButton } from "@/components/ui/icon-button";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ function Inner({ userId, initialEmail }: { userId: string; initialEmail: string 
   const r = useRouter();
   const { profile, loading, update, uploadAvatar } = useProfile(userId);
   const notif = useNotificationPermission();
+  const push = usePushSubscription(profile?.id ?? null);
 
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
@@ -323,6 +325,30 @@ function Inner({ userId, initialEmail }: { userId: string; initialEmail: string 
                 </span>
               ) : notif.state === "denied" ? (
                 <span className="text-[11.5px] font-medium text-destructive">غیرفعال</span>
+              ) : null
+            }
+          />
+          <Row
+            icon={<Bell className="size-4" />}
+            title="اعلان پوش (حتی وقتی تب بسته است)"
+            subtitle={
+              push.state === "unsupported"
+                ? "مرورگر شما Web Push را پشتیبانی نمی‌کند"
+                : push.state === "subscribed"
+                ? "فعال — پیام‌های جدید حتی با تب بسته اعلان می‌شوند"
+                : push.state === "denied"
+                ? "اجازهٔ اعلان داده نشده"
+                : "غیرفعال"
+            }
+            action={
+              push.state === "subscribed" ? (
+                <Button variant="outline" size="sm" disabled={push.loading} onClick={() => void push.unsubscribe()}>
+                  غیرفعال کردن
+                </Button>
+              ) : push.state === "unsubscribed" || push.state === "default" ? (
+                <Button variant="outline" size="sm" disabled={push.loading} onClick={() => void push.subscribe()}>
+                  فعال کردن
+                </Button>
               ) : null
             }
           />
