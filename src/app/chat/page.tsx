@@ -64,6 +64,21 @@ function Inner({ me }: { me: Profile }) {
   const [active, setActive] = useState<string | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
 
+  // دکمهٔ Back در موبایل: اگر در چت هستیم، به لیست چت برگرد (نه خروج از اپ)
+  useEffect(() => {
+    const onPopState = () => {
+      if (active) {
+        setActive(null);
+        // push state دوباره تا back بعدی هم کار کند
+        window.history.pushState(null, "", window.location.href);
+      }
+    };
+    // push state اولیه
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [active]);
+
   // به‌روزرسانی دوره‌ای last_seen_at
   usePresenceHeartbeat(true);
 
