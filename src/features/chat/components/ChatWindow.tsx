@@ -6,13 +6,13 @@ import {
   useState,
   useMemo,
   useCallback,
-  Fragment,
   type DragEventHandler,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Phone, Video, Search, MoreVertical, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useMessages } from "../hooks/useMessages";
+import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { useMediaUpload } from "../hooks/useMediaUpload";
 import { useTyping } from "../hooks/useTyping";
 import { MessageBubble, type BubbleContextInfo } from "./MessageBubble";
@@ -71,6 +71,7 @@ export function ChatWindow({
   const endRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const bubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [atBottom, setAtBottom] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -263,12 +264,13 @@ export function ChatWindow({
   }, [messages]);
 
   const scrollToMessage = useCallback((id: string) => {
-    const el = bubbleRefs.current.get(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const idx = items.findIndex((it) => it.m.id === id);
+    if (idx >= 0) {
+      virtuosoRef.current?.scrollToIndex({ index: idx, behavior: "smooth", align: "center" });
+    }
     setHighlightId(id);
     setTimeout(() => setHighlightId(null), 1600);
-  }, []);
+  }, [items]);
 
   const openMenu = (info: BubbleContextInfo) => {
     setMenu({
@@ -515,36 +517,32 @@ export function ChatWindow({
       />
 
       {/* پیام‌ها */}
-      <div ref={boxRef} className="chat-pattern relative min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-4xl px-3 md:px-4 py-3">
-          {/* Sentinel برای infinite scroll */}
-          {hasMore && !loading && (
-            <div ref={topSentinelRef} className="h-1 w-full" aria-hidden />
-          )}
-
-          {loadingMore && (
-            <p className="text-center text-xs text-muted-foreground py-3 animate-pulse">
-              در حال بارگذاری پیام‌های قدیمی…
-            </p>
-          )}
-
-          {loading && (
-            <p className="text-center text-xs text-muted-foreground py-6">
-              در حال بارگذاری…
-            </p>
-          )}
-
-          {!loading && messages.length === 0 && (
-            <div className="grid place-items-center py-16 text-center">
-              <div className="rounded-2xl bg-panel/70 backdrop-blur px-5 py-4 text-sm text-muted-foreground border border-border/60 max-w-sm">
-                هنوز پیامی رد و بدل نشده. اولین پیام را بفرستید 👋
-              </div>
+      <div className="chat-pattern relative min-h-0 flex-1">
+        {loading && (
+          <p className="text-center text-xs text-muted-foreground py-6">
+            در حال بارگذاری…
+          </p>
+        )}
+        {!loading && messages.length === 0 && (
+          <div className="grid place-items-center h-full text-center">
+            <div className="rounded-2xl bg-panel/70 backdrop-blur px-5 py-4 text-sm text-muted-foreground border border-border/60 max-w-sm">
+              هنوز پیامی نیست. پیام بفرستید
             </div>
-          )}
-
-          <AnimatePresence initial={false}>
-            {items.map(({ m, group, newDay, replyRef, forwardedFromName }) => (
-              <Fragment key={m.id}>
+          </div>
+        )}
+        {!loading && messages.length > 0 && (
+          <Virtuoso
+            ref={virtuosoRef}
+            data={items}
+            initialTopMostItemIndex={firstUnreadId ? Math.max(0, items.findIndex((it) => it.m.id === firstUnreadId)) : items.length - 1}
+            startReached={() => {
+              if (hasMore && !loadingMore) {
+                void loadMore();
+              }
+            }}
+            atBottomStateChange={(b) => setAtBottom(b)}
+            itemContent={(index, { m, group, newDay, replyRef, forwardedFromName }) => (
+              <div className="mx-auto max-w-4xl px-3 md:px-4 py-0.5">
                 {newDay && <DaySeparator label={formatDaySeparator(m.created_at)} />}
                 {firstUnreadId === m.id && <NewMessagesDivider />}
                 <MessageBubble
@@ -561,12 +559,19 @@ export function ChatWindow({
                     else bubbleRefs.current.delete(m.id);
                   }}
                 />
-              </Fragment>
-            ))}
-          </AnimatePresence>
-
-          <div ref={endRef} />
-        </div>
+              </div>
+            )}
+            components={{
+              Header: () => loadingMore ? (
+                <p className="text-center text-xs text-muted-foreground py-3 animate-pulse">
+                  در حال بارگذاری پیام‌های قدیمی…
+                </p>
+              ) : null,
+            }}
+            className="h-full"
+          />
+)
+}
 
         {/* دکمه‌ی برو پایین */}
         <AnimatePresence>
@@ -577,7 +582,7 @@ export function ChatWindow({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.9 }}
               transition={spring.snappy}
-              onClick={() => endRef.current?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => virtuosoRef.current?.scrollToIndex({ index: items.length - 1, behavior: "smooth" })}
               className={cn(
                 "absolute bottom-4 end-4 size-11 rounded-full",
                 "bg-panel border border-border shadow-md",

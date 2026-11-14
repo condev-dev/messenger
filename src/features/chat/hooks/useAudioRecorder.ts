@@ -120,7 +120,6 @@ export function useAudioRecorder() {
 
       return true;
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error("startRecording failed:", err);
       cleanup();
       setIsRecording(false);
