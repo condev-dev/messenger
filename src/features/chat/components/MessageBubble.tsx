@@ -6,10 +6,11 @@ import { motion } from "framer-motion";
 import { Check, CheckCheck, Clock, AlertCircle, Reply as ReplyIcon, Pin, Forward as ForwardIcon } from "lucide-react";
 import type { Message, ReplyRef } from "../types";
 import { getRenderer } from "../messages/registry";
+import { isEmojiOnly, emojiJumboClass } from "../lib/emoji";
 import { bubbleIn } from "@/lib/motion";
 import { formatTime } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { isEmojiOnly, emojiJumboClass } from "../lib/emoji";
+import { useReactions } from "../hooks/useReactions";
 
 type Group = "single" | "first" | "middle" | "last";
 
@@ -24,6 +25,7 @@ export function MessageBubble({
   message,
   mine,
   group,
+  userId,
   replyRef,
   highlighted,
   forwardedFromName,
@@ -35,6 +37,7 @@ export function MessageBubble({
   message: Message;
   mine: boolean;
   group: Group;
+  userId: string;
   replyRef?: ReplyRef | null;
   highlighted?: boolean;
   /** اگر پیام forward است و فرستنده‌ی اصلی مشخص است */
@@ -144,6 +147,7 @@ export function MessageBubble({
     onContextMenu({ message, x: e.clientX, y: e.clientY, mine });
   };
 
+  const { reactions, toggleReaction } = useReactions(message.id, userId);
   const Renderer = getRenderer(message.type);
 
   return (
@@ -297,6 +301,27 @@ export function MessageBubble({
           <span>{formatTime(message.created_at)}</span>
           {mine && !isDeleted && <StatusIcon status={message.status} isJumbo={isJumbo} />}
         </div>
+        {/* واکنش‌ها */}
+        {reactions.length > 0 && !isDeleted && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {reactions.map((r) => (
+              <button
+                key={r.emoji}
+                type="button"
+                onClick={() => toggleReaction(r.emoji)}
+                className={cn(
+                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border",
+                  r.mine
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-muted border-border/60"
+                )}
+              >
+                <span>{r.emoji}</span>
+                <span className="text-[10px]">{r.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

@@ -584,7 +584,8 @@ export function ChatWindow({
                   message={m}
                   mine={m.sender_id === userId}
                   group={group}
-                  replyRef={replyRef}
+                  userId={userId}
+                   replyRef={replyRef}
                   highlighted={highlightId === m.id}
                   forwardedFromName={forwardedFromName}
                   onContextMenu={openMenu}
