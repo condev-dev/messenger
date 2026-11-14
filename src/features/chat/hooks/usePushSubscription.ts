@@ -52,6 +52,12 @@ export function usePushSubscription(userId: string | null) {
     console.log("VAPID key length:", VAPID_PUBLIC_KEY.length, VAPID_PUBLIC_KEY);
     setLoading(true);
     try {
+      // ابتدا اجازهٔ اعلان را بخواه
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setState(permission === "denied" ? "denied" : "default");
+        return false;
+      }
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
