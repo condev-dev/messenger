@@ -357,6 +357,17 @@ export function ChatWindow({
         const caption = idx === 0 ? trimmed : "";
         void send(type, mediaContent(media, caption || undefined), replyToId);
       });
+      void fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-push`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ chatId, senderId: userId, messageText: trimmed || "📎 فایل" }),
+        }
+      ).catch(() => {});
       uploader.clear();
       setReplyTo(null);
       stopTyping();
@@ -365,6 +376,18 @@ export function ChatWindow({
 
     if (!trimmed) return;
     void send("text", { text: trimmed }, replyToId);
+    // صدا زدن Edge Function برای ارسال push به اعضای دیگر
+    void fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-push`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ chatId, senderId: userId, messageText: trimmed }),
+      }
+    ).catch(() => {});
     setReplyTo(null);
     stopTyping();
   };
