@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { createElement, useRef } from "react";
+import { createElement, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, CheckCheck, Clock, AlertCircle, Reply as ReplyIcon, Pin, Forward as ForwardIcon } from "lucide-react";
 import type { Message, ReplyRef } from "../types";
@@ -28,6 +28,7 @@ export function MessageBubble({
   highlighted,
   forwardedFromName,
   onContextMenu,
+  onReply,
   onReplyClick,
   bubbleRef,
 }: {
@@ -39,6 +40,7 @@ export function MessageBubble({
   /** اگر پیام forward است و فرستنده‌ی اصلی مشخص است */
   forwardedFromName?: string | null;
   onContextMenu?: (info: BubbleContextInfo) => void;
+  onReply?: (message: Message) => void;
   onReplyClick?: (id: string) => void;
   bubbleRef?: (el: HTMLDivElement | null) => void;
 }) {
@@ -91,6 +93,40 @@ export function MessageBubble({
     }
   };
 
+  // Swipe to reply
+  const swipeStartX = useRef<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const SWIPE_THRESHOLD = 60;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isDeleted) return;
+    const t = e.touches[0];
+    if (t) {
+      swipeStartX.current = t.clientX;
+      startPress(t.clientX, t.clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (swipeStartX.current === null) return;
+    const t = e.touches[0];
+    if (!t) return;
+    const dx = t.clientX - swipeStartX.current;
+    const dir = mine ? -1 : 1;
+    const offset = Math.max(0, Math.min(80, dx * dir));
+    setSwipeOffset(offset);
+    clearPress();
+  };
+
+  const handleTouchEnd = () => {
+    if (swipeOffset >= SWIPE_THRESHOLD) {
+      onReply?.(message);
+    }
+    setSwipeOffset(0);
+    swipeStartX.current = null;
+    clearPress();
+  };
+
   const handleContextMenu = (e: React.MouseEvent) => {
     if (isDeleted || !onContextMenu) return;
     e.preventDefault();
@@ -114,14 +150,10 @@ export function MessageBubble({
       <motion.div
         ref={(el) => bubbleRef?.(el)}
         onContextMenu={handleContextMenu}
-        onTouchStart={(e) => {
-          if (isDeleted) return;
-          const t = e.touches[0];
-          if (t) startPress(t.clientX, t.clientY);
-        }}
-        onTouchEnd={clearPress}
-        onTouchMove={clearPress}
-        onTouchCancel={clearPress}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
+        onTouchCancel={handleTouchEnd}
         animate={{
           backgroundColor: isJumbo
             ? "rgba(0,0,0,0)"

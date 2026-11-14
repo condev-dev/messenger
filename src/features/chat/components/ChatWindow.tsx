@@ -588,6 +588,17 @@ export function ChatWindow({
                   highlighted={highlightId === m.id}
                   forwardedFromName={forwardedFromName}
                   onContextMenu={openMenu}
+                  onReply={(msg: Message) => {
+                    // Build reply ref
+                    const sender = msg.sender_id === userId ? "شما" : (other?.display_name ?? other?.username ?? "کاربر");
+                    setReplyTo({
+                      id: msg.id,
+                      sender_id: msg.sender_id,
+                      sender_name: sender,
+                      preview: typeof msg.content.text === "string" ? msg.content.text.slice(0, 80) : msg.type,
+                      type: msg.type,
+                    });
+                  }}
                   onReplyClick={scrollToMessage}
                   bubbleRef={(el) => {
                     if (el) bubbleRefs.current.set(m.id, el);
