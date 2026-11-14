@@ -411,6 +411,12 @@ export function ChatWindow({
     stopTyping();
   };
 
+  const handleSendSticker = (emoji: string) => {
+    void send("sticker", { emoji }, replyTo?.id ?? null);
+    setReplyTo(null);
+    stopTyping();
+  };
+
   const handleSendVoice = async (blob: Blob, duration: number, waveform: number[]) => {
     if (!chatId || !userId) return;
     try {
@@ -652,6 +658,7 @@ export function ChatWindow({
         attachmentsBusy={uploader.isUploading}
         onTyping={notifyTyping}
         onPickGif={handleSendGif}
+        onPickSticker={handleSendSticker}
         onSendVoice={handleSendVoice}
       />
 

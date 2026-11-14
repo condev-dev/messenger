@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, Mic, Smile, Paperclip, X, Reply as ReplyIcon, Pencil, Check, ImagePlay } from "lucide-react";
+import { Send, Mic, Smile, Paperclip, X, Reply as ReplyIcon, Pencil, Check, ImagePlay, Sticker } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { spring, duration, easing } from "@/lib/motion";
 import type { ReplyRef } from "../types";
@@ -10,6 +10,7 @@ import type { PendingAttachment } from "../hooks/useMediaUpload";
 import { AttachmentTray } from "./AttachmentTray";
 import { EmojiPicker } from "./EmojiPicker";
 import { GifPicker } from "./GifPicker";
+import { StickerPicker } from "./StickerPicker";
 import type { GifItem } from "../lib/klipy";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -32,6 +33,8 @@ type Props = {
   onTyping?: () => void;
   /* --- GIF --- */
   onPickGif?: (gif: GifItem) => void;
+  /* --- Sticker --- */
+  onPickSticker?: (emoji: string) => void;
   /* --- Voice --- */
   onSendVoice?: (blob: Blob, duration: number, waveform: number[]) => void;
 };
@@ -50,6 +53,7 @@ export function ChatInput({
   attachmentsBusy,
   onTyping,
   onPickGif,
+  onPickSticker,
   onSendVoice,
 }: Props) {
   const [text, setText] = useState("");
@@ -57,11 +61,14 @@ export function ChatInput({
   const [emojiRect, setEmojiRect] = useState<DOMRect | null>(null);
   const [gifOpen, setGifOpen] = useState(false);
   const [gifRect, setGifRect] = useState<DOMRect | null>(null);
+  const [stickerOpen, setStickerOpen] = useState(false);
+  const [stickerRect, setStickerRect] = useState<DOMRect | null>(null);
   const recorder = useAudioRecorder();
   const ref = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
   const gifBtnRef = useRef<HTMLButtonElement>(null);
+  const stickerBtnRef = useRef<HTMLButtonElement>(null);
   const hasText = text.trim().length > 0;
   const isEditing = !!editing;
   const hasAttachments = attachments.length > 0;
@@ -256,6 +263,32 @@ export function ChatInput({
             onPickGif?.(gif);
           }}
           onClose={() => setGifOpen(false)}
+        />
+
+        <IconButton
+          ref={stickerBtnRef}
+          aria-label="استیکر"
+          title="استیکر"
+          onClick={() => {
+            if (disabled || isEditing) return;
+            const r = stickerBtnRef.current?.getBoundingClientRect() ?? null;
+            setStickerRect(r);
+            setStickerOpen((s) => !s);
+          }}
+          className={cn(stickerOpen && "text-primary")}
+          disabled={isEditing}
+        >
+          <Sticker />
+        </IconButton>
+
+        <StickerPicker
+          open={stickerOpen}
+          anchorRect={stickerRect}
+          onPick={(emoji) => {
+            setStickerOpen(false);
+            onPickSticker?.(emoji);
+          }}
+          onClose={() => setStickerOpen(false)}
         />
 
         <input
