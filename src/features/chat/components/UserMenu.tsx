@@ -104,6 +104,65 @@ export function UserMenu({
   const [open, setOpen] = React.useState(false);
   const { theme, setTheme } = useTheme();
   const closeMenu = React.useCallback(() => setOpen(false), []);
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+
+  if (isMobile) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="rounded-full outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ring/60 hover:scale-105 active:scale-95"
+          aria-label="منوی کاربر"
+        >
+          <Avatar name={displayName} src={avatarUrl} size="md" />
+        </button>
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/40"
+              onClick={closeMenu}
+            >
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="absolute bottom-0 left-0 right-0 bg-panel rounded-t-2xl p-4 space-y-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-3 p-2">
+                  <Avatar name={displayName} src={avatarUrl} size="md" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{displayName}</p>
+                    <p className="truncate text-[12px] text-muted-foreground">@{username}</p>
+                  </div>
+                </div>
+                <div className="h-px bg-border" />
+                <button
+                  onClick={() => { onOpenSettings(); closeMenu(); }}
+                  className="w-full flex items-center gap-2.5 px-2 py-2 text-sm rounded-md hover:bg-accent"
+                >
+                  <Settings className="size-4" />
+                  <span>تنظیمات</span>
+                </button>
+                <button
+                  onClick={() => { onSignOut(); closeMenu(); }}
+                  className="w-full flex items-center gap-2.5 px-2 py-2 text-sm rounded-md text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="size-4" />
+                  <span>خروج</span>
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
 
   return (
     <MenuPrimitive.Root open={open} onOpenChange={setOpen}>
