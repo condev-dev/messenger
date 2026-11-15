@@ -1,10 +1,9 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User, Phone, AtSign, Info } from "lucide-react";
+import { X, User, Info } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar-smart";
-import { spring, duration, easing } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { spring } from "@/lib/motion";
 import type { Profile } from "../types";
 
 type Props = {

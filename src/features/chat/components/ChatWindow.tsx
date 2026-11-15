@@ -9,7 +9,7 @@ import {
   type DragEventHandler,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Phone, Video, Search, MoreVertical, Upload, Info } from "lucide-react";
+import { ChevronDown, Phone, Video, Search, Upload, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useMessages } from "../hooks/useMessages";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
@@ -78,7 +78,6 @@ export function ChatWindow({
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const bubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [atBottom, setAtBottom] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   // snapshot از scrollHeight قبل از prepend برای حفظ موقعیت کاربر هنگام loadMore
