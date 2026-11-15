@@ -139,9 +139,6 @@ export function ChatList({
             >
               <div className="relative">
                 <Avatar name={name} src={c.other?.avatar_url} size="lg" />
-                {c.other?.last_seen_at && new Date(c.other.last_seen_at).getTime() > Date.now() - 5 * 60 * 1000 && (
-                  <span className="absolute bottom-0 end-0 size-3 rounded-full bg-green-500 ring-2 ring-panel" />
-                )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">

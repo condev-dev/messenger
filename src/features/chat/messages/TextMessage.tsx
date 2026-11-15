@@ -1,35 +1,21 @@
 "use client";
 
 import type { Message } from "../types";
-import { cn } from "@/lib/utils";
 
-const URL_RE = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/gi;
+const URL_RE = /https?:\/\/[^\s<]+/gi;
 
 export function TextMessage({ message }: { message: Message }) {
   const text = typeof message.content.text === "string" ? message.content.text : "";
-  const parts = text.split(URL_RE);
-  const matches = text.match(URL_RE) ?? [];
 
-  if (matches.length === 0) {
-    return <p className="whitespace-pre-wrap break-words leading-7">{text}</p>;
-  }
-
-  // Rebuild with links
-  const elements: React.ReactNode[] = [];
+  const parts: React.ReactNode[] = [];
   let lastIndex = 0;
-  let matchIndex = 0;
   const regex = new RegExp(URL_RE.source, "gi");
   let m: RegExpExecArray | null;
-  let pos = 0;
-  const result: React.ReactNode[] = [];
-  let lastEnd = 0;
-
-  regex.lastIndex = 0;
   while ((m = regex.exec(text)) !== null) {
-    if (m.index > lastEnd) {
-      result.push(text.slice(lastEnd, m.index));
+    if (m.index > lastIndex) {
+      parts.push(text.slice(lastIndex, m.index));
     }
-    result.push(
+    parts.push(
       <a
         key={m.index}
         href={m[0]}
@@ -40,11 +26,15 @@ export function TextMessage({ message }: { message: Message }) {
         {m[0]}
       </a>
     );
-    lastEnd = m.index + m[0].length;
+    lastIndex = m.index + m[0].length;
   }
-  if (lastEnd < text.length) {
-    result.push(text.slice(lastEnd));
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
   }
 
-  return <p className="whitespace-pre-wrap break-words leading-7">{result}</p>;
+  if (parts.length === 0 || (parts.length === 1 && typeof parts[0] === "string")) {
+    return <p className="whitespace-pre-wrap break-words leading-7">{text}</p>;
+  }
+
+  return <p className="whitespace-pre-wrap break-words leading-7">{parts}</p>;
 }
