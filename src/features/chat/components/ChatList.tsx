@@ -14,12 +14,16 @@ export function ChatList({
   onSelect,
   loading,
   onRefresh,
+  folder,
+  onFolderChange,
 }: {
   chats: ChatItem[];
   activeId: string | null;
   onSelect: (id: string) => void;
   loading?: boolean;
   onRefresh?: () => void;
+  folder?: string;
+  onFolderChange?: (f: string) => void;
 }) {
   // Pull to refresh
   const [pullDistance, setPullDistance] = useState(0);
@@ -47,6 +51,22 @@ export function ChatList({
     setPullDistance(0);
     touchStartY.current = null;
   };
+  // Filter chats by folder
+  const filteredChats = chats.filter((c) => {
+    if (!folder || folder === "all") return true;
+    if (folder === "unread") return (c.unread ?? 0) > 0;
+    if (folder === "groups") return c.type === "group";
+    if (folder === "personal") return c.type === "direct";
+    return true;
+  });
+
+  // Sort: pinned first
+  const sortedChats = [...filteredChats].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return 0;
+  });
+
   if (loading && chats.length === 0) {
     return (
       <ul className="p-2 space-y-1">
@@ -75,13 +95,32 @@ export function ChatList({
   }
 
   return (
-    <ul
-      className="py-1"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {chats.map((c) => {
+    <div className="flex flex-col h-full">
+      {/* Folder tabs */}
+      {onFolderChange && (
+        <div className="flex gap-1 px-2 py-2 border-b border-border/60 overflow-x-auto">
+          {["all", "unread", "personal", "groups"].map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => onFolderChange(f)}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors",
+                folder === f ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-accent"
+              )}
+            >
+              {f === "all" ? "همه" : f === "unread" ? "خوانده‌نشده" : f === "personal" ? "شخصی" : "گروه‌ها"}
+            </button>
+          ))}
+        </div>
+      )}
+      <ul
+        className="py-1 flex-1 overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {sortedChats.map((c) => {
         const name = c.title ?? c.other?.display_name ?? c.other?.username ?? "چت";
         const isActive = activeId === c.id;
         return (
@@ -98,7 +137,12 @@ export function ChatList({
                   : "hover:bg-panel-hover"
               )}
             >
-              <Avatar name={name} src={c.other?.avatar_url} size="lg" />
+              <div className="relative">
+                <Avatar name={name} src={c.other?.avatar_url} size="lg" />
+                {c.other?.last_seen_at && new Date(c.other.last_seen_at).getTime() > Date.now() - 5 * 60 * 1000 && (
+                  <span className="absolute bottom-0 end-0 size-3 rounded-full bg-green-500 ring-2 ring-panel" />
+                )}
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span
@@ -120,13 +164,23 @@ export function ChatList({
                 </div>
                 <div className="mt-0.5 flex items-center justify-between gap-2">
                   <p className="truncate text-[13px] text-muted-foreground">
-                    {c.preview ?? ""}
+                    {c.draft ? (
+                      <span className="text-red-500">پیش‌نویس: {c.draft}</span>
+                    ) : c.typing ? (
+                      <span className="text-primary italic">در حال نوشتن…</span>
+                    ) : (
+                      c.preview ?? ""
+                    )}
                   </p>
-                  {c.unread && c.unread > 0 ? (
-                    <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-unread-badge text-[11px] font-semibold text-white grid place-items-center tabular-nums">
-                      {c.unread > 99 ? "99+" : c.unread}
-                    </span>
-                  ) : null}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {c.pinned && <span className="text-[11px]">📌</span>}
+                    {c.muted && <span className="text-[11px]">🔇</span>}
+                    {c.unread && c.unread > 0 ? (
+                      <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-unread-badge text-[11px] font-semibold text-white grid place-items-center tabular-nums">
+                        {c.unread > 99 ? "99+" : c.unread}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
               </div>
               {isActive && (
@@ -141,5 +195,6 @@ export function ChatList({
         );
       })}
     </ul>
+  </div>
   );
 }

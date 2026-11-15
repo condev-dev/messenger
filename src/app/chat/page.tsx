@@ -62,6 +62,7 @@ function Inner({ me }: { me: Profile }) {
   const { chats, reload } = useChats(me.id);
   const [active, setActive] = useState<string | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [folder, setFolder] = useState("all");
 
   // دکمهٔ Back در موبایل: اگر در چت هستیم، به لیست چت برگرد (نه خروج از اپ)
   useEffect(() => {
@@ -149,6 +150,8 @@ function Inner({ me }: { me: Profile }) {
             activeId={active}
             onSelect={setActive}
             onRefresh={reload}
+            folder={folder}
+            onFolderChange={setFolder}
           />
         }
         main={

@@ -50,4 +50,8 @@ export type ChatItem = {
   other?: Profile; // برای چت دونفره
   preview?: string; // پیش‌نمایش آخرین پیام
   unread?: number;  // تعداد پیام‌های نخوانده
+  pinned?: boolean;
+  muted?: boolean;
+  draft?: string;
+  typing?: boolean;
 };
