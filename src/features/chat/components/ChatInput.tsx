@@ -206,164 +206,8 @@ export function ChatInput({
       </AnimatePresence>
 
       <div className="mx-auto max-w-4xl flex items-end gap-1.5 px-2 py-2">
-        <IconButton
-          ref={emojiBtnRef}
-          aria-label="ایموجی"
-          title="ایموجی"
-          onClick={() => {
-            if (disabled) return;
-            const r = emojiBtnRef.current?.getBoundingClientRect() ?? null;
-            setEmojiRect(r);
-            setEmojiOpen((s) => !s);
-          }}
-          className={cn(emojiOpen && "text-primary")}
-        >
-          <Smile />
-        </IconButton>
-
-        <EmojiPicker
-          open={emojiOpen}
-          anchorRect={emojiRect}
-          onPick={(emoji) => {
-            const el = ref.current;
-            const start = el?.selectionStart ?? text.length;
-            const end = el?.selectionEnd ?? text.length;
-            const next = text.slice(0, start) + emoji + text.slice(end);
-            setText(next);
-            // بعد از render، cursor رو بعد از ایموجی قرار بده
-            requestAnimationFrame(() => {
-              if (el) {
-                el.focus();
-                const pos = start + emoji.length;
-                el.setSelectionRange(pos, pos);
-              }
-            });
-            onTyping?.();
-          }}
-          onClose={() => setEmojiOpen(false)}
-        />
-
-        <IconButton
-          ref={gifBtnRef}
-          aria-label="گیف"
-          title="GIF"
-          onClick={() => {
-            if (disabled || isEditing) return;
-            const r = gifBtnRef.current?.getBoundingClientRect() ?? null;
-            setGifRect(r);
-            setGifOpen((s) => !s);
-          }}
-          className={cn(gifOpen && "text-primary")}
-          disabled={isEditing}
-        >
-          <ImagePlay />
-        </IconButton>
-
-        <GifPicker
-          open={gifOpen}
-          anchorRect={gifRect}
-          onPick={(gif) => {
-            setGifOpen(false);
-            onPickGif?.(gif);
-          }}
-          onClose={() => setGifOpen(false)}
-        />
-
-        <IconButton
-          ref={stickerBtnRef}
-          aria-label="استیکر"
-          title="استیکر"
-          onClick={() => {
-            if (disabled || isEditing) return;
-            const r = stickerBtnRef.current?.getBoundingClientRect() ?? null;
-            setStickerRect(r);
-            setStickerOpen((s) => !s);
-          }}
-          className={cn(stickerOpen && "text-primary")}
-          disabled={isEditing}
-        >
-          <Sticker />
-        </IconButton>
-
-        <StickerPicker
-          open={stickerOpen}
-          anchorRect={stickerRect}
-          stickers={stickers}
-          onPick={(value, isImage) => {
-            setStickerOpen(false);
-            onPickSticker?.(value, isImage);
-          }}
-          onUpload={(file) => {
-            onUploadSticker?.(file);
-          }}
-          onClose={() => setStickerOpen(false)}
-        />
-
-        <input
-          ref={fileRef}
-          type="file"
-          multiple
-          className="hidden"
-          onChange={(e) => {
-            const list = Array.from(e.target.files ?? []);
-            if (list.length > 0) onPickFiles?.(list);
-            // reset تا انتخاب همان فایل بار دوم هم کار کند
-            e.target.value = "";
-          }}
-        />
-
-        <div className="relative flex-1">
-          <textarea
-            ref={ref}
-            value={text}
-            rows={1}
-            disabled={disabled}
-            placeholder={
-              isEditing
-                ? "پیام را ویرایش کنید…"
-                : hasAttachments
-                ? "توضیح (اختیاری)…"
-                : "پیام بنویسید…"
-            }
-            onChange={(e) => {
-              setText(e.target.value);
-              if (e.target.value.trim().length > 0 && !isEditing) onTyping?.();
-            }}
-            onPaste={handlePaste}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                submit();
-              } else if (e.key === "Escape") {
-                e.preventDefault();
-                cancel();
-              }
-            }}
-            className="
-              block w-full resize-none rounded-2xl bg-muted/70 focus:bg-muted
-              px-4 py-2.5 pe-11 text-[15px] leading-6 outline-none
-              transition-colors duration-150
-              placeholder:text-muted-foreground
-              focus-visible:ring-2 focus-visible:ring-ring/50
-              disabled:opacity-60 disabled:pointer-events-none
-            "
-          />
-          {!isEditing && (
-            <div className="absolute end-1.5 bottom-1.5">
-              <IconButton
-                aria-label="پیوست"
-                title="افزودن عکس یا فایل"
-                size="sm"
-                onClick={openPicker}
-                disabled={disabled || !onPickFiles}
-              >
-                <Paperclip />
-              </IconButton>
-            </div>
-          )}
-        </div>
-
-        <motion.div layout transition={spring.snappy} className="relative">
+        {/* دکمهٔ ارسال/میکروفون — سمت راست (start در RTL) */}
+        <motion.div layout transition={spring.snappy} className="relative order-first">
           <AnimatePresence mode="wait" initial={false}>
             {isEditing ? (
               <motion.div
@@ -432,6 +276,151 @@ export function ChatInput({
             )}
           </AnimatePresence>
         </motion.div>
+
+        {/* فیلد متن */}
+        <div className="relative flex-1">
+          <textarea
+            ref={ref}
+            value={text}
+            rows={1}
+            disabled={disabled}
+            placeholder={
+              isEditing
+                ? "پیام را ویرایش کنید…"
+                : hasAttachments
+                ? "توضیح (اختیاری)…"
+                : "پیام بنویسید…"
+            }
+            onChange={(e) => {
+              setText(e.target.value);
+              if (e.target.value.trim().length > 0 && !isEditing) onTyping?.();
+            }}
+            onPaste={handlePaste}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submit();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                cancel();
+              }
+            }}
+            className="
+              block w-full resize-none rounded-2xl bg-muted/70 focus:bg-muted
+              px-4 py-2.5 pe-11 text-[15px] leading-6 outline-none
+              transition-colors duration-150
+              placeholder:text-muted-foreground
+              focus-visible:ring-2 focus-visible:ring-ring/50
+              disabled:opacity-60 disabled:pointer-events-none
+            "
+          />
+          {!isEditing && (
+            <div className="absolute end-1.5 bottom-1.5">
+              <IconButton
+                aria-label="پیوست"
+                title="افزودن عکس یا فایل"
+                size="sm"
+                onClick={openPicker}
+                disabled={disabled || !onPickFiles}
+              >
+                <Paperclip />
+              </IconButton>
+            </div>
+          )}
+        </div>
+
+        {/* دکمه‌های emoji/gif/sticker — سمت چپ (end در RTL) */}
+        <IconButton
+          ref={emojiBtnRef}
+          aria-label="ایموجی"
+          title="ایموجی"
+          onClick={() => {
+            if (disabled) return;
+            const r = emojiBtnRef.current?.getBoundingClientRect() ?? null;
+            setEmojiRect(r);
+            setEmojiOpen((s) => !s);
+          }}
+          className={cn(emojiOpen && "text-primary")}
+        >
+          <Smile />
+        </IconButton>
+
+        <EmojiPicker
+          open={emojiOpen}
+          anchorRect={emojiRect}
+          onPick={(emoji) => {
+            const el = ref.current;
+            const start = el?.selectionStart ?? text.length;
+            const end = el?.selectionEnd ?? text.length;
+            const next = text.slice(0, start) + emoji + text.slice(end);
+            setText(next);
+            requestAnimationFrame(() => {
+              if (el) {
+                el.focus();
+                const pos = start + emoji.length;
+                el.setSelectionRange(pos, pos);
+              }
+            });
+            onTyping?.();
+          }}
+          onClose={() => setEmojiOpen(false)}
+        />
+
+        <IconButton
+          ref={gifBtnRef}
+          aria-label="گیف"
+          title="GIF"
+          onClick={() => {
+            if (disabled || isEditing) return;
+            const r = gifBtnRef.current?.getBoundingClientRect() ?? null;
+            setGifRect(r);
+            setGifOpen((s) => !s);
+          }}
+          className={cn(gifOpen && "text-primary")}
+          disabled={isEditing}
+        >
+          <ImagePlay />
+        </IconButton>
+
+        <GifPicker
+          open={gifOpen}
+          anchorRect={gifRect}
+          onPick={(gif) => {
+            setGifOpen(false);
+            onPickGif?.(gif);
+          }}
+          onClose={() => setGifOpen(false)}
+        />
+
+        <IconButton
+          ref={stickerBtnRef}
+          aria-label="استیکر"
+          title="استیکر"
+          onClick={() => {
+            if (disabled || isEditing) return;
+            const r = stickerBtnRef.current?.getBoundingClientRect() ?? null;
+            setStickerRect(r);
+            setStickerOpen((s) => !s);
+          }}
+          className={cn(stickerOpen && "text-primary")}
+          disabled={isEditing}
+        >
+          <Sticker />
+        </IconButton>
+
+        <StickerPicker
+          open={stickerOpen}
+          anchorRect={stickerRect}
+          stickers={stickers}
+          onPick={(value, isImage) => {
+            setStickerOpen(false);
+            onPickSticker?.(value, isImage);
+          }}
+          onUpload={(file) => {
+            onUploadSticker?.(file);
+          }}
+          onClose={() => setStickerOpen(false)}
+        />
       </div>
     </div>
   );
