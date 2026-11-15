@@ -8,7 +8,6 @@ import { ChatList } from "@/features/chat/components/ChatList";
 import { ChatWindow } from "@/features/chat/components/ChatWindow";
 import { NewChatDialog } from "@/features/chat/components/NewChatDialog";
 import { AppShell } from "@/features/chat/components/AppShell";
-import { usePresenceHeartbeat } from "@/features/chat/hooks/usePresenceHeartbeat";
 import { useDesktopNotifications } from "@/features/chat/hooks/useDesktopNotifications";
 import type { Profile } from "@/features/chat/types";
 

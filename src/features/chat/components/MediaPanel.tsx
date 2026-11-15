@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Smile, ImagePlay, Sticker as StickerIcon, X } from "lucide-react";
-import { duration, easing } from "@/lib/motion";
+import { Smile, ImagePlay, Sticker as StickerIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = "emoji" | "sticker" | "gif";
@@ -86,7 +85,7 @@ export function MediaPanel({ open, tab, onTabChange, onClose, children }: Props)
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
-          transition={{ duration: duration.base, ease: easing.out }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
           className="fixed top-16 right-4 z-40 w-80 h-[calc(100vh-5rem)] bg-panel rounded-2xl shadow-2xl ring-1 ring-border/60 flex flex-col overflow-hidden"
           ref={containerRef}
         >

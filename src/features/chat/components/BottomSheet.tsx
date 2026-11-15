@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { duration, easing } from "@/lib/motion";
 
 type Props = {
   open: boolean;
