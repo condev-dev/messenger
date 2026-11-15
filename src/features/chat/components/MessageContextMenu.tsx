@@ -7,7 +7,7 @@ import { Reply, Pencil, Copy, Trash2, X, Pin, PinOff, Forward } from "lucide-rea
 import { cn } from "@/lib/utils";
 import { menuPop } from "@/lib/motion";
 
-export type MessageMenuAction = "reply" | "edit" | "copy" | "delete" | "pin" | "unpin" | "forward";
+export type MessageMenuAction = "reply" | "edit" | "copy" | "delete" | "pin" | "unpin" | "forward" | `react:${string}`;
 
 type Props = {
   open: boolean;
@@ -112,6 +112,22 @@ export function MessageContextMenu({
                   />
                 )}
               >
+                {/* واکنش سریع */}
+                <div className="flex items-center justify-center gap-1 px-1 py-1.5 border-b border-border/60 mb-1">
+                  {["👍", "❤️", "😂", "😮", "😢", "🙏"].map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        onAction(`react:${emoji}` as MessageMenuAction);
+                        closeMenu();
+                      }}
+                      className="text-lg p-1 rounded-md hover:bg-accent transition-colors"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
                 <Item label="پاسخ" icon={<Reply />} onSelect={() => onAction("reply")} closeMenu={closeMenu} />
                 {mine && canEdit && (
                   <Item label="ویرایش" icon={<Pencil />} onSelect={() => onAction("edit")} closeMenu={closeMenu} />

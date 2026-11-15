@@ -316,6 +316,23 @@ export function ChatWindow({
       );
     } else if (action === "forward") {
       setForwardSource(m);
+    } else if (action.startsWith("react:")) {
+      const emoji = action.slice(6);
+      // toggle reaction
+      (async () => {
+        const { data: existing } = await supabase
+          .from("message_reactions")
+          .select("id")
+          .eq("message_id", m.id)
+          .eq("user_id", userId)
+          .eq("emoji", emoji)
+          .maybeSingle();
+        if (existing) {
+          await supabase.from("message_reactions").delete().eq("id", (existing as { id: string }).id);
+        } else {
+          await supabase.from("message_reactions").insert({ message_id: m.id, user_id: userId, emoji });
+        }
+      })();
     }
   };
 
