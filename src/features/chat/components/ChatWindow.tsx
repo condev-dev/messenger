@@ -9,7 +9,7 @@ import {
   type DragEventHandler,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Phone, Video, Search, MoreVertical, Upload } from "lucide-react";
+import { ChevronDown, Phone, Video, Search, MoreVertical, Upload, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useMessages } from "../hooks/useMessages";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
@@ -20,6 +20,7 @@ import { MessageBubble, type BubbleContextInfo } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { DaySeparator } from "./DaySeparator";
 import { NewMessagesDivider } from "./NewMessagesDivider";
+import { InfoPanel } from "./InfoPanel";
 import { ChatSearch } from "./ChatSearch";
 import { MessageContextMenu, type MessageMenuAction } from "./MessageContextMenu";
 import { ReactionBar } from "./ReactionBar";
@@ -77,7 +78,9 @@ export function ChatWindow({
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const bubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [atBottom, setAtBottom] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   // snapshot از scrollHeight قبل از prepend برای حفظ موقعیت کاربر هنگام loadMore
   const prevScrollHeight = useRef<number | null>(null);
 
@@ -560,8 +563,8 @@ export function ChatWindow({
           <IconButton aria-label="تماس تصویری" size="sm" title="ویدیو (به‌زودی)" disabled>
             <Video />
           </IconButton>
-          <IconButton aria-label="بیشتر" size="sm" title="منو (به‌زودی)" disabled>
-            <MoreVertical />
+          <IconButton aria-label="اطلاعات" size="sm" title="اطلاعات چت" onClick={() => setInfoOpen(true)}>
+            <Info />
           </IconButton>
         </div>
       </header>
@@ -710,6 +713,13 @@ export function ChatWindow({
         stickers={stickers}
         onUploadSticker={(file) => void uploadSticker(file)}
         onSendVoice={handleSendVoice}
+      />
+
+      <InfoPanel
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        profile={other ?? null}
+        title={title}
       />
 
       <MessageContextMenu
