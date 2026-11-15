@@ -79,8 +79,28 @@ function Inner({ me }: { me: Profile }) {
     return () => window.removeEventListener("popstate", onPopState);
   }, [active]);
 
-  // به‌روزرسانی دوره‌ای last_seen_at
-  usePresenceHeartbeat(true);
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === "k") {
+          e.preventDefault();
+          // Focus search if available
+          const searchInput = document.querySelector<HTMLInputElement>("[data-chat-search]");
+          searchInput?.focus();
+        } else if (e.key === "n") {
+          e.preventDefault();
+          setComposeOpen(true);
+        }
+      }
+      if (e.key === "Escape") {
+        if (composeOpen) setComposeOpen(false);
+        else if (active) setActive(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active, composeOpen]);
 
   // نقشه‌ی id → نام طرف مقابل، برای نوتیفیکیشن
   const senderNames = useMemo(() => {
