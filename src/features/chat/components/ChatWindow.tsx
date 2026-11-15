@@ -22,6 +22,7 @@ import { DaySeparator } from "./DaySeparator";
 import { NewMessagesDivider } from "./NewMessagesDivider";
 import { ChatSearch } from "./ChatSearch";
 import { MessageContextMenu, type MessageMenuAction } from "./MessageContextMenu";
+import { ReactionBar } from "./ReactionBar";
 import { TypingDots } from "./TypingDots";
 import { ForwardDialog } from "./ForwardDialog";
 import { PinnedBar } from "./PinnedBar";
@@ -89,6 +90,12 @@ export function ChatWindow({
     message: Message | null;
     mine: boolean;
   }>({ open: false, anchor: null, message: null, mine: false });
+  const [reactionBar, setReactionBar] = useState<{
+    open: boolean;
+    message: Message | null;
+    x: number;
+    y: number;
+  }>({ open: false, message: null, x: 0, y: 0 });
   const [highlightId, setHighlightId] = useState<string | null>(null);
   // منبع هدایت → باز کردن ForwardDialog
   const [forwardSource, setForwardSource] = useState<Message | null>(null);
@@ -280,6 +287,12 @@ export function ChatWindow({
       anchor: { x: info.x, y: info.y },
       message: info.message,
       mine: info.mine,
+    });
+    setReactionBar({
+      open: true,
+      message: info.message,
+      x: info.x,
+      y: info.y,
     });
   };
 
@@ -701,13 +714,41 @@ export function ChatWindow({
 
       <MessageContextMenu
         open={menu.open}
-        onOpenChange={(v) => setMenu((s) => ({ ...s, open: v }))}
+        onOpenChange={(v) => {
+          setMenu((s) => ({ ...s, open: v }));
+          if (!v) setReactionBar((s) => ({ ...s, open: false }));
+        }}
         anchor={menu.anchor}
         mine={menu.mine}
         canEdit={menu.message?.type === "text" && !menu.message?.deleted_at}
         canDelete={!menu.message?.deleted_at}
         isPinned={!!menu.message?.pinned_at}
         onAction={handleAction}
+      />
+
+      <ReactionBar
+        open={reactionBar.open}
+        x={reactionBar.x}
+        y={reactionBar.y}
+        onReact={(emoji) => {
+          const m = reactionBar.message;
+          if (!m) return;
+          (async () => {
+            const { data: existing } = await supabase
+              .from("message_reactions")
+              .select("id")
+              .eq("message_id", m.id)
+              .eq("user_id", userId)
+              .eq("emoji", emoji)
+              .maybeSingle();
+            if (existing) {
+              await supabase.from("message_reactions").delete().eq("id", (existing as { id: string }).id);
+            } else {
+              await supabase.from("message_reactions").insert({ message_id: m.id, user_id: userId, emoji });
+            }
+          })();
+        }}
+        onClose={() => setReactionBar((s) => ({ ...s, open: false }))}
       />
 
       <ForwardDialog
