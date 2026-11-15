@@ -22,7 +22,6 @@ export function ChatList({
   onRefresh?: () => void;
 }) {
   // Pull to refresh
-  const [pulling, setPulling] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const touchStartY = useRef<number | null>(null);
   const PULL_THRESHOLD = 60;
@@ -38,7 +37,6 @@ export function ChatList({
     const dy = e.touches[0].clientY - touchStartY.current;
     if (dy > 0) {
       setPullDistance(Math.min(dy, 100));
-      setPulling(true);
     }
   };
 
@@ -46,7 +44,6 @@ export function ChatList({
     if (pullDistance >= PULL_THRESHOLD && onRefresh) {
       onRefresh();
     }
-    setPulling(false);
     setPullDistance(0);
     touchStartY.current = null;
   };
