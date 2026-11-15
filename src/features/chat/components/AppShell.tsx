@@ -116,8 +116,8 @@ export function AppShell({
               className="absolute inset-0 hidden md:grid place-items-center text-center px-6"
             >
               <div className="max-w-sm">
-                <div className="mx-auto mb-4 size-16 rounded-full bg-brand-soft text-brand-strong grid place-items-center">
-                  <MessageSquare className="size-7" />
+                <div className="mx-auto mb-4 size-20 rounded-full bg-brand-soft text-brand-strong grid place-items-center">
+                  <MessageSquare className="size-9" />
                 </div>
                 <p className="text-lg font-semibold">یک گفتگو را انتخاب کنید</p>
                 <p className="mt-1 text-sm text-muted-foreground">
