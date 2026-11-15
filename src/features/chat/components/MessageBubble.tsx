@@ -166,6 +166,7 @@ export function MessageBubble({
         ref={(el) => bubbleRef?.(el)}
         onContextMenu={handleContextMenu}
         onClick={handleClick}
+        onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchCancel={handleTouchEnd}

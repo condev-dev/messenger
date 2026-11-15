@@ -25,6 +25,7 @@ export function useReactions(messageId: string | null, userId: string) {
   }, [messageId, userId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync reactions from DB on mount
     void fetchReactions();
     if (!messageId) return;
     const channel = supabase
