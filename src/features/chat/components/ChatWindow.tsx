@@ -75,9 +75,18 @@ export function ChatWindow({
   const endRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const virtuosoRef = useRef<VirtuosoHandle>(null);
-  const bubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [atBottom, setAtBottom] = useState(true);
+  const [unreadWhileScrolled, setUnreadWhileScrolled] = useState(0);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
+  // Track unread count while scrolled up
+  const prevMsgCount = useRef(messages.length);
+  useEffect(() => {
+    if (messages.length > prevMsgCount.current && !atBottom) {
+      setUnreadWhileScrolled((c) => c + (messages.length - prevMsgCount.current));
+    }
+    prevMsgCount.current = messages.length;
+  }, [messages.length, atBottom]);
+  const bubbleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [searchOpen, setSearchOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   // snapshot از scrollHeight قبل از prepend برای حفظ موقعیت کاربر هنگام loadMore
@@ -607,7 +616,10 @@ export function ChatWindow({
                 void loadMore();
               }
             }}
-            atBottomStateChange={(b) => setAtBottom(b)}
+            atBottomStateChange={(b) => {
+              setAtBottom(b);
+              if (b) setUnreadWhileScrolled(0);
+            }}
             itemContent={(index, { m, group, newDay, replyRef, forwardedFromName }) => (
               <div className="mx-auto max-w-4xl px-3 md:px-4 py-0.5">
                 {newDay && <DaySeparator label={formatDaySeparator(m.created_at)} />}
@@ -670,6 +682,11 @@ export function ChatWindow({
               )}
               aria-label="برو پایین"
             >
+              {unreadWhileScrolled > 0 && (
+                <span className="absolute -top-1 -end-1 size-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold grid place-items-center">
+                  {unreadWhileScrolled > 99 ? "99+" : unreadWhileScrolled}
+                </span>
+              )}
               <ChevronDown />
             </motion.button>
           )}

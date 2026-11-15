@@ -91,7 +91,7 @@ export function AppShell({
       {/* پنجره‌ی چت */}
       <main
         className={cn(
-          "min-w-0 flex-1 bg-chat-bg relative",
+          "min-w-0 flex-1 bg-chat-bg relative bg-[radial-gradient(circle_at_1px_1px,_rgba(0,0,0,0.05)_1px,_transparent_0)] bg-[size:20px_20px]",
           hasActive ? "block" : "hidden md:block"
         )}
       >
