@@ -181,7 +181,7 @@ export function MessageBubble({
         }}
         transition={{ duration: 0.4 }}
         className={cn(
-          "relative max-w-[78%] md:max-w-[65%] text-[14.5px] leading-6",
+          "relative max-w-[78%] md:max-w-[65%] text-[14.5px] leading-6 group",
           isJumbo ? "px-1 py-1" : "px-3 py-1.5 shadow-bubble",
           mine ? "text-bubble-out-fg" : "text-bubble-in-fg",
           isDeleted && "italic opacity-70"
@@ -321,6 +321,31 @@ export function MessageBubble({
                 <span className="text-[10px]">{r.count}</span>
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Hover actions (دسکتاپ) */}
+        {!isDeleted && (
+          <div className="hidden md:flex absolute -top-3 end-0 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={() => onReply?.(message)}
+              className="size-6 grid place-items-center rounded-full bg-panel shadow ring-1 ring-border/60 hover:bg-accent"
+              aria-label="پاسخ"
+            >
+              <ReplyIcon className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const rect = (document.activeElement as HTMLElement)?.getBoundingClientRect();
+                onContextMenu?.({ message, x: rect?.left ?? 0, y: rect?.top ?? 0, mine });
+              }}
+              className="size-6 grid place-items-center rounded-full bg-panel shadow ring-1 ring-border/60 hover:bg-accent"
+              aria-label="واکنش"
+            >
+              <span className="text-xs">😊</span>
+            </button>
           </div>
         )}
       </motion.div>
