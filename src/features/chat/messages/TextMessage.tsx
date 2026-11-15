@@ -1,6 +1,7 @@
 "use client";
 
 import type { Message } from "../types";
+import { LinkPreview } from "./LinkPreview";
 
 const URL_RE = /https?:\/\/[^\s<]+/gi;
 
@@ -32,9 +33,14 @@ export function TextMessage({ message }: { message: Message }) {
     parts.push(text.slice(lastIndex));
   }
 
-  if (parts.length === 0 || (parts.length === 1 && typeof parts[0] === "string")) {
-    return <p className="whitespace-pre-wrap break-words leading-7">{text}</p>;
-  }
+  const hasUrl = URL_RE.test(text);
+  // Reset regex lastIndex
+  URL_RE.lastIndex = 0;
 
-  return <p className="whitespace-pre-wrap break-words leading-7">{parts}</p>;
+  return (
+    <>
+      <p className="whitespace-pre-wrap break-words leading-7">{parts.length > 0 ? parts : text}</p>
+      {hasUrl && <LinkPreview text={text} />}
+    </>
+  );
 }

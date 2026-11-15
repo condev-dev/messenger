@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Avatar } from "@/components/ui/avatar-smart";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,13 @@ export function ChatList({
   folder?: string;
   onFolderChange?: (f: string) => void;
 }) {
+  // Online dot: update "now" every 30s
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
   // Pull to refresh
   const [pullDistance, setPullDistance] = useState(0);
   const touchStartY = useRef<number | null>(null);
@@ -139,6 +146,9 @@ export function ChatList({
             >
               <div className="relative">
                 <Avatar name={name} src={c.other?.avatar_url} size="lg" />
+                {c.other?.last_seen_at && new Date(c.other.last_seen_at).getTime() > now - 5 * 60 * 1000 && (
+                  <span className="absolute bottom-0 end-0 size-3 rounded-full bg-green-500 ring-2 ring-panel" />
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
