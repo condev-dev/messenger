@@ -129,6 +129,7 @@ function Inner({ me }: { me: Profile }) {
             chats={chats}
             activeId={active}
             onSelect={setActive}
+            onRefresh={reload}
           />
         }
         main={

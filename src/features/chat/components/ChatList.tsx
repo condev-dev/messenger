@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Avatar } from "@/components/ui/avatar-smart";
 import { cn } from "@/lib/utils";
@@ -12,12 +13,43 @@ export function ChatList({
   activeId,
   onSelect,
   loading,
+  onRefresh,
 }: {
   chats: ChatItem[];
   activeId: string | null;
   onSelect: (id: string) => void;
   loading?: boolean;
+  onRefresh?: () => void;
 }) {
+  // Pull to refresh
+  const [pulling, setPulling] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const touchStartY = useRef<number | null>(null);
+  const PULL_THRESHOLD = 60;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.currentTarget.scrollTop === 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (dy > 0) {
+      setPullDistance(Math.min(dy, 100));
+      setPulling(true);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance >= PULL_THRESHOLD && onRefresh) {
+      onRefresh();
+    }
+    setPulling(false);
+    setPullDistance(0);
+    touchStartY.current = null;
+  };
   if (loading && chats.length === 0) {
     return (
       <ul className="p-2 space-y-1">
@@ -46,7 +78,12 @@ export function ChatList({
   }
 
   return (
-    <ul className="py-1">
+    <ul
+      className="py-1"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {chats.map((c) => {
         const name = c.title ?? c.other?.display_name ?? c.other?.username ?? "چت";
         const isActive = activeId === c.id;
